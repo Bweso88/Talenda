@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
                 ->memberOf($brazzaville, 'parent')
                 ->memberOf($pointeNoire, 'parent')
                 ->create([
-                    'name' => 'Parent Démo',
+                    'name' => 'Prisca Mabiala',
                     'phone' => '+242063333333',
                     'email' => null,
                     'password' => 'talenda-demo',

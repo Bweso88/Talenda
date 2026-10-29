@@ -30,7 +30,7 @@ Comptes de démonstration (mot de passe : `talenda-demo`) :
 | Super Admin | `admin@talenda.test` | `/platform` |
 | Directeur | `06 111 11 11` | Lycée Démo de Brazzaville |
 | Directrice | `05 222 22 22` | Collège Démo de Pointe-Noire |
-| Parent | `06 333 33 33` | Les deux écoles (un seul compte) |
+| Parent | `06 333 33 33` | App parents : deux enfants au Lycée de Brazzaville, compte aussi au Collège de Pointe-Noire |
 | Caissier | `06 444 44 10` | Lycée Démo de Brazzaville (caisse ouverte) |
 | Enseignant | `06 444 44 02` | Lycée Démo de Brazzaville (ses matières et ses classes seulement) |
 | Surveillant général | `06 444 44 20` | Lycée Démo de Brazzaville (appel, absences, discipline) |
@@ -68,7 +68,13 @@ Les tests utilisent la base PostgreSQL `talenda_test`.
     classe, publication des périodes, bulletins (PDF), moyennes annuelles
     et décisions de fin d'année ;
   - `SchoolLife` : appel (absences, retards), justificatifs, discipline ;
-    absences reportées sur le bulletin.
+    absences reportées sur le bulletin ;
+  - `ParentPortal` : accès des parents (ouvert par l'école) et API v1 de
+    l'app parents (`mobile/`).
+
+Documentation de l'API : `/docs/api` en local, et `docs/openapi.json`
+(contrat de l'app, à régénérer après tout changement de l'API :
+`php artisan scramble:export --path=../docs/openapi.json`).
 - `app/Filament/School/` et `app/Filament/Platform/` : écrans des deux
   back-offices.
 - `config/talenda.php` : catalogues des modules, rôles, permissions et
