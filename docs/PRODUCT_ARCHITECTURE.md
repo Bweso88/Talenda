@@ -44,6 +44,37 @@ de 100 à 3 000 élèves. Conséquences directes sur la conception :
   coefficients, rangs) → **tout ce qui est réglementaire est paramétrable**,
   rien n'est codé en dur.
 
+### Marché de lancement : République du Congo (Brazzaville)
+
+Les premières écoles clientes sont au Congo-Brazzaville. Le produit reste
+multi-pays (tout est paramétrable par tenant), mais les **valeurs par défaut
+d'une nouvelle école** et le paramétrage de démo sont ceux du Congo :
+
+| Paramètre | Valeur par défaut |
+|---|---|
+| Devise | **XAF** (franc CFA BEAC), sans décimales : montants stockés en francs entiers |
+| Fuseau horaire | `Africa/Brazzaville` (UTC+1) |
+| Langue | Français |
+| Téléphone | Indicatif **+242**, numéros à 9 chiffres (06 MTN, 05 / 04 Airtel), normalisés au format E.164 |
+| Année scolaire | Octobre → juin / juillet, découpée en **3 trimestres** |
+| Notation | Sur **20**, coefficients par matière, rang dans la classe, mentions |
+| Cycles et niveaux | Préscolaire · Primaire (CP1, CP2, CE1, CE2, CM1, CM2) · Collège (6e → 3e) · Lycée (2nde → Terminale) |
+| Séries du lycée | Générales A (littéraire), C (mathématiques-physique), D (mathématiques-sciences naturelles) ; séries techniques activables au besoin |
+| Examens nationaux | CEPE (fin CM2), BEPC (fin 3e), Baccalauréat (Terminale) : suivis comme classes d'examen (frais d'examen, listes de candidats, résultats) |
+| Mobile money | **MTN Mobile Money** et **Airtel Money**, les deux opérateurs du pays |
+| Données personnelles | Loi congolaise sur la protection des données à caractère personnel (loi n° 29-2019), à faire valider par un juriste local avant la mise en production |
+
+Ces valeurs sont un **gabarit de pays** (`country_presets` : `CG` au
+lancement) appliqué à la création d'une école, puis modifiable par
+l'école. Ajouter le Gabon, le Cameroun ou la RDC revient à ajouter un
+gabarit, sans changer le code.
+
+À vérifier sur le terrain auprès de l'école pilote avant l'étape 4 : le
+modèle exact de bulletin utilisé (disposition, appréciations, signatures,
+cachet), le calcul de la moyenne trimestrielle (poids des devoirs par rapport
+à la composition) et celui de la moyenne annuelle (moyenne simple des 3
+trimestres ou pondérée).
+
 ---
 
 ## 2. Ce que l'on reprend de Scolia, et ce que l'on corrige
@@ -271,7 +302,7 @@ l'école.
 Conventions : `id` bigint, `tenant_id` sur toute table métier,
 `timestamps`, `soft_deletes` là où la suppression doit rester auditable.
 **Montants** : entiers en unité monétaire minimale (`bigint`) + code devise
-ISO 4217 au niveau du tenant (XOF, XAF, CDF, GNF…). Jamais de `float` pour
+ISO 4217 au niveau du tenant (XAF au lancement ; XOF, CDF, GNF… ensuite). Jamais de `float` pour
 l'argent ni pour les notes (`numeric(5,2)` pour les notes).
 
 ### 8.1 Plateforme (hors tenant)
@@ -629,7 +660,8 @@ l'étape N.
 | Hébergement | Laravel Cloud ou VPS géré (Forge) avec Redis + worker de file d'attente | Mutualisé : **déconseillé** (pas de files d'attente fiables, ni de Chromium pour les PDF) |
 | Tenant côté web | Sous-domaine par école | Sélection de l'école après connexion |
 | Connexion parent | Téléphone + mot de passe au MVP, code SMS (OTP) en V2 | OTP dès le MVP (coût SMS) |
-| Agrégateur mobile money (V2) | À choisir selon les pays des premières écoles (CinetPay, FedaPay, Flutterwave…) | Intégration directe des opérateurs |
+| Mobile money (V2) | Agrégateur couvrant **MTN MoMo et Airtel Money au Congo** (couverture, frais et délais de reversement à vérifier auprès des fournisseurs) | Intégration directe des API MTN MoMo et Airtel Money (deux contrats, deux intégrations) |
+| SMS (V2) | Fournisseur local ou agrégateur avec bonne délivrabilité sur MTN et Airtel Congo, nom d'expéditeur au nom de l'école | — |
 
 ---
 
@@ -638,3 +670,4 @@ l'étape N.
 | Date | Décision | Raison |
 |---|---|---|
 | 2026-10-29 | Talenda repart de zéro ; Scolia sert de référence fonctionnelle | Passage d'un cahier de liaison à une gestion scolaire complète ; corriger les limites de modèle de Scolia (identité, inscriptions, notes) |
+| 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |
