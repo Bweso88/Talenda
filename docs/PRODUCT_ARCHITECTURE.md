@@ -99,6 +99,33 @@ trimestres ou pondérée).
 | Aucun module financier | **Module Finances au cœur du MVP**, conçu comme un registre comptable (aucune suppression, uniquement des écritures correctives). |
 | Migrations corrigées a posteriori pour être idempotentes en production | Migrations testées en CI sur une base vierge **et** sur une copie de la base de démo avant tout déploiement. |
 
+### Relation avec Scolia : deux produits distincts, jonction prévue
+
+- **Scolia reste un produit à part entière**, avec son propre dépôt, son
+  backend et son app mobile. Le développement de Talenda **ne modifie
+  jamais** le dépôt Scolia : on le lit comme référence, rien de plus.
+- **À terme, une jonction** est prévue pour la **communication avec les
+  parents** : Scolia apportera son savoir-faire de cahier de liaison
+  (messagerie, devoirs, comportement, annonces), Talenda les données de
+  gestion (élèves, classes, responsables, notes, finances). La forme exacte
+  (API entre les deux, fusion des apps parents, Scolia comme module de
+  Talenda) sera décidée au moment de la jonction, pas maintenant.
+- **Pour l'instant, on ne développe que Talenda.** Mais on le conçoit pour
+  que la jonction soit simple :
+  - identifiants publics stables (**UUID**) sur les entités partageables
+    (écoles, élèves, responsables, classes, personnel), en plus des `id`
+    internes ;
+  - événements métier explicites (`StudentEnrolled`, `GuardianLinked`,
+    `TermResultsPublished`, `PaymentRecorded`…) déclenchés par les Actions,
+    pour pouvoir plus tard les diffuser à Scolia (webhooks ou file de
+    messages) sans toucher au code métier ;
+  - API v1 documentée en OpenAPI, réutilisable par Scolia ;
+  - le module **Communication** de Talenda reste volontairement **minimal**
+    (annonces + notifications). Messagerie, cahier de texte et comportement
+    (prévus en V2) sont **à réarbitrer avant d'être développés** : ils
+    pourraient venir de Scolia lors de la jonction plutôt qu'être
+    réécrits.
+
 ---
 
 ## 3. Personas
@@ -655,7 +682,6 @@ l'étape N.
 | Sujet | Proposition | Alternative |
 |---|---|---|
 | Back-office | Filament 4 | Inertia + Vue / React, si l'on veut une interface sur mesure (coût de développement bien plus élevé) |
-| Mobile | Flutter (expérience Scolia) | React Native / Expo (même langage TypeScript que d'éventuels outils web) |
 | Hébergement | Laravel Cloud ou VPS géré (Forge) avec Redis + worker de file d'attente | Mutualisé : **déconseillé** (pas de files d'attente fiables, ni de Chromium pour les PDF) |
 | Tenant côté web | Sous-domaine par école | Sélection de l'école après connexion |
 | Connexion parent | Téléphone + mot de passe au MVP, code SMS (OTP) en V2 | OTP dès le MVP (coût SMS) |
@@ -670,4 +696,6 @@ l'étape N.
 |---|---|---|
 | 2026-10-29 | Talenda repart de zéro ; Scolia sert de référence fonctionnelle | Passage d'un cahier de liaison à une gestion scolaire complète ; corriger les limites de modèle de Scolia (identité, inscriptions, notes) |
 | 2026-10-29 | **PostgreSQL** retenu (au lieu de MySQL, pourtant mieux maîtrisé par l'équipe) | Contraintes `CHECK` et index partiels pour les règles métier (une inscription active par élève et par année), `numeric` exact pour l'argent et les notes, requêtes analytiques du pilotage, Row-Level Security possible en seconde barrière d'isolation. Coût d'apprentissage limité : Eloquent et les migrations Laravel masquent la plupart des différences |
+| 2026-10-29 | **Flutter** pour l'app mobile (Android d'abord, Riverpod, client API généré depuis l'OpenAPI, cache hors ligne en lecture) | Rendu homogène et performant sur Android d'entrée de gamme, expérience acquise sur Scolia, app sans besoin de partage de code avec un front web |
+| 2026-10-29 | Scolia reste un produit séparé, non modifié ; jonction future sur la communication parents ; développement uniquement sur Talenda | Préserver Scolia ; concevoir Talenda (UUID publics, événements métier, API documentée, communication minimale) pour faciliter la jonction |
 | 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |
