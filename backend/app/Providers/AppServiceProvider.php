@@ -2,7 +2,16 @@
 
 namespace App\Providers;
 
+use App\Modules\Core\Http\Middleware\ResolveApiTenant;
 use App\Modules\Core\Tenancy\TenantContext;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Schema as GeneratorSchema;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\RouteInfo;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +45,8 @@ class AppServiceProvider extends ServiceProvider
 
         DB::prohibitDestructiveCommands($isProduction);
 
+        $this->configureApiDocumentation();
+
         Password::defaults(fn () => $isProduction
             ? Password::min(10)->letters()->numbers()->uncompromised()
             : Password::min(10));
@@ -53,5 +64,29 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('login:'.mb_strtolower((string) $request->input('login'))),
             Limit::perMinute(20)->by('login-ip:'.$request->ip()),
         ]);
+    }
+
+    /**
+     * Documentation OpenAPI de l'API mobile (Scramble) : jeton Bearer et
+     * en-tête X-Tenant sur les routes d'une école. C'est le contrat de
+     * l'app Flutter (docs/openapi.json, régénéré par
+     * `php artisan scramble:export --path=../docs/openapi.json`).
+     */
+    private function configureApiDocumentation(): void
+    {
+        Scramble::configure()
+            ->withDocumentTransformers(fn (OpenApi $openApi) => $openApi->secure(SecurityScheme::http('bearer')))
+            ->withOperationTransformers(function (Operation $operation, RouteInfo $routeInfo): void {
+                if (! in_array(ResolveApiTenant::class, $routeInfo->route->gatherMiddleware(), true)) {
+                    return;
+                }
+
+                $operation->addParameters([
+                    Parameter::make(ResolveApiTenant::HEADER, 'header')
+                        ->required(true)
+                        ->description('uuid de l\'école (voir GET /v1/me).')
+                        ->setSchema(GeneratorSchema::fromType(new StringType)),
+                ]);
+            });
     }
 }

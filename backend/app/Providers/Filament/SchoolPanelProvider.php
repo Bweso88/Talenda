@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\School\Auth\Login;
 use App\Filament\School\Pages\EditSchoolProfile;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\BrandColors;
 use App\Filament\Support\InitialsAvatarProvider;
 use App\Modules\Core\Http\Middleware\SyncFilamentTenant;
 use App\Modules\Core\Models\Tenant;
@@ -16,7 +17,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -35,6 +35,9 @@ class SchoolPanelProvider extends PanelProvider
             ->id('school')
             ->path('ecole')
             ->brandName('Talenda')
+            ->brandLogo(fn () => asset('images/talenda-logo-horizontal.png'))
+            ->brandLogoHeight('2.25rem')
+            ->favicon(fn () => asset('favicon.png'))
             ->login(Login::class)
             ->tenant(Tenant::class, slugAttribute: 'slug')
             ->tenantProfile(EditSchoolProfile::class)
@@ -56,7 +59,8 @@ class SchoolPanelProvider extends PanelProvider
             ], isPersistent: true)
             ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->colors([
-                'primary' => Color::Indigo,
+                // Bleu du logo Talenda.
+                'primary' => BrandColors::primary(),
             ])
             ->discoverResources(in: app_path('Filament/School/Resources'), for: 'App\Filament\School\Resources')
             ->discoverPages(in: app_path('Filament/School/Pages'), for: 'App\Filament\School\Pages')

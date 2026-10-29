@@ -17,7 +17,9 @@ use Illuminate\Support\Carbon;
 
 /**
  * Justifie les absences d'un élève sur une période (certificat médical,
- * mot des parents). Un justificatif apporté après la publication des
+ * mot des parents). Saisi par l'école, le justificatif est accepté
+ * d'office ; déposé par un parent depuis l'app, il attend l'examen de la
+ * vie scolaire. Un justificatif apporté après la publication des
  * bulletins ne modifie pas le bulletin déjà publié.
  */
 final class JustifyAbsences
@@ -25,6 +27,36 @@ final class JustifyAbsences
     public function __construct(private readonly RecordAudit $recordAudit) {}
 
     public function handle(Enrollment $enrollment, Carbon $startsOn, Carbon $endsOn, JustificationReason $reason, ?string $comment, User $user): AbsenceJustification
+    {
+        return $this->create($enrollment, $startsOn, $endsOn, $reason, $comment, $user, JustificationStatus::Accepted);
+    }
+
+    /**
+     * Justificatif déposé par un parent : « à examiner ».
+     */
+    public function submitByGuardian(Enrollment $enrollment, Carbon $startsOn, Carbon $endsOn, JustificationReason $reason, ?string $comment, User $parent): AbsenceJustification
+    {
+        return $this->create($enrollment, $startsOn, $endsOn, $reason, $comment, $parent, JustificationStatus::Pending);
+    }
+
+    public function review(AbsenceJustification $justification, bool $accept, User $reviewer): void
+    {
+        if ($justification->status !== JustificationStatus::Pending) {
+            throw new BusinessRuleViolation('Ce justificatif a déjà été examiné.');
+        }
+
+        $justification->update([
+            'status' => $accept ? JustificationStatus::Accepted : JustificationStatus::Rejected,
+            'reviewed_by' => $reviewer->id,
+            'reviewed_at' => now(),
+        ]);
+
+        $this->recordAudit->handle($accept ? 'absence.justification_accepted' : 'absence.justification_rejected', actor: $reviewer, subject: $justification, metadata: [
+            'absences_covered' => $accept ? self::coveredAbsences($justification) : 0,
+        ]);
+    }
+
+    private function create(Enrollment $enrollment, Carbon $startsOn, Carbon $endsOn, JustificationReason $reason, ?string $comment, User $user, JustificationStatus $status): AbsenceJustification
     {
         if ($endsOn->lt($startsOn)) {
             throw new BusinessRuleViolation('La date de fin du justificatif est avant sa date de début.');
@@ -42,11 +74,11 @@ final class JustifyAbsences
             'ends_on' => $endsOn->toDateString(),
             'reason' => $reason,
             'comment' => blank($comment) ? null : trim($comment),
-            'status' => JustificationStatus::Accepted,
+            'status' => $status,
             'recorded_by' => $user->id,
         ]);
 
-        $this->recordAudit->handle('absence.justified', actor: $user, subject: $justification, metadata: [
+        $this->recordAudit->handle($status === JustificationStatus::Pending ? 'absence.justification_submitted' : 'absence.justified', actor: $user, subject: $justification, metadata: [
             'enrollment' => $enrollment->uuid,
             'from' => $startsOn->toDateString(),
             'to' => $endsOn->toDateString(),

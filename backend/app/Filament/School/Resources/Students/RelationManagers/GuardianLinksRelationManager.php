@@ -8,7 +8,9 @@ use App\Modules\Enrollments\Actions\LinkGuardian;
 use App\Modules\Enrollments\Enums\GuardianRelationship;
 use App\Modules\Enrollments\Models\Student;
 use App\Modules\Enrollments\Models\StudentGuardian;
+use App\Modules\ParentPortal\Actions\GrantParentAccess;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -20,6 +22,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Exceptions\Halt;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -95,6 +98,8 @@ class GuardianLinksRelationManager extends RelationManager
                 TextColumn::make('guardian.profession')->label('Profession')->placeholder('—'),
                 IconColumn::make('is_primary_contact')->label('Contact principal')->boolean(),
                 IconColumn::make('is_financially_responsible')->label('Paie la scolarité')->boolean(),
+                IconColumn::make('has_app_access')->label('App parents')->boolean()
+                    ->state(fn (StudentGuardian $record): bool => $record->guardian->user_id !== null),
             ])
             ->headerActions([
                 CreateAction::make()
@@ -129,6 +134,39 @@ class GuardianLinksRelationManager extends RelationManager
 
                         return $record;
                     }),
+                Action::make('grantAppAccess')
+                    ->label('Ouvrir l\'app')
+                    ->icon(Heroicon::OutlinedDevicePhoneMobile)
+                    ->visible(fn (StudentGuardian $record): bool => $record->guardian->user_id === null)
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (StudentGuardian $record): string => "Ouvrir l'app parents à {$record->guardian->full_name}")
+                    ->modalDescription('Le responsable se connectera avec son téléphone. Il verra la scolarité, les bulletins publiés et les absences de ses enfants dans cette école.')
+                    ->action(function (StudentGuardian $record): void {
+                        try {
+                            $temporaryPassword = app(GrantParentAccess::class)->handle($record->guardian, Filament::auth()->user());
+                        } catch (BusinessRuleViolation $exception) {
+                            Notification::make()->danger()->title($exception->getMessage())->send();
+
+                            return;
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->title("App parents ouverte pour {$record->guardian->full_name}")
+                            ->body($temporaryPassword === null
+                                ? 'Ce parent avait déjà un compte Talenda : il se connecte avec son mot de passe habituel.'
+                                : "Identifiant : son téléphone. Mot de passe provisoire : **{$temporaryPassword}** — à lui communiquer ; il devra le changer à sa première connexion. Il ne sera plus affiché.")
+                            ->persistent()
+                            ->send();
+                    }),
+                Action::make('revokeAppAccess')
+                    ->label('Fermer l\'app')
+                    ->icon(Heroicon::OutlinedNoSymbol)
+                    ->color('danger')
+                    ->visible(fn (StudentGuardian $record): bool => $record->guardian->user_id !== null)
+                    ->requiresConfirmation()
+                    ->modalDescription('Le parent ne verra plus ses enfants de cette école dans l\'app. Son compte reste valable ailleurs.')
+                    ->action(fn (StudentGuardian $record) => app(GrantParentAccess::class)->revoke($record->guardian, Filament::auth()->user())),
                 DeleteAction::make()->label('Retirer'),
             ]);
     }

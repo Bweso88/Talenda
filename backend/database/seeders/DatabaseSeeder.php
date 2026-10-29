@@ -24,6 +24,7 @@ use App\Modules\Core\Support\SchoolClock;
 use App\Modules\Core\Tenancy\TenantContext;
 use App\Modules\Enrollments\Actions\EnrollNewStudent;
 use App\Modules\Enrollments\Models\Enrollment;
+use App\Modules\Enrollments\Models\Guardian;
 use App\Modules\Enrollments\Models\Student;
 use App\Modules\Finances\Actions\CashDesk;
 use App\Modules\Finances\Actions\RecordPayment;
@@ -33,12 +34,14 @@ use App\Modules\Finances\Models\FeeAmount;
 use App\Modules\Finances\Models\FeeType;
 use App\Modules\Finances\Models\Invoice;
 use App\Modules\Finances\Models\Payment;
+use App\Modules\ParentPortal\Actions\GrantParentAccess;
 use App\Modules\SchoolLife\Actions\JustifyAbsences;
 use App\Modules\SchoolLife\Actions\RecordIncident;
 use App\Modules\SchoolLife\Actions\TakeAttendance;
 use App\Modules\SchoolLife\Enums\AttendanceStatus;
 use App\Modules\SchoolLife\Enums\JustificationReason;
 use App\Modules\SchoolLife\Enums\Sanction;
+use App\Modules\SchoolLife\Models\AbsenceJustification;
 use App\Modules\SchoolLife\Models\AttendanceRecord;
 use App\Modules\SchoolLife\Models\AttendanceSession;
 use App\Modules\SchoolLife\Models\AttendanceSlot;
@@ -97,6 +100,7 @@ class DatabaseSeeder extends Seeder
             $this->seedDemoPayments();
             $this->seedDemoGrades();
             $this->seedDemoSchoolLife();
+            $this->seedDemoParentAccess();
         });
 
         app(TenantContext::class)->run($brazzaville, fn () => $brazzaville->settings()->update([
@@ -174,7 +178,8 @@ class DatabaseSeeder extends Seeder
 
         $classes = SchoolClass::query()->pluck('id', 'name');
         $enroll = app(EnrollNewStudent::class);
-        $mother = ['relationship' => 'mother', 'last_name' => 'Okemba', 'first_names' => 'Prisca', 'phone' => '+242065550001', 'is_financially_responsible' => true];
+        // La mère de la fratrie est le compte « Parent Démo » (app parents).
+        $mother = ['relationship' => 'mother', 'last_name' => 'Mabiala', 'first_names' => 'Prisca', 'phone' => '+242063333333', 'is_financially_responsible' => true];
 
         $students = [
             ['Mabiala', 'Grâce Divine', 'F', '2014-05-12', '6e A', $mother],
@@ -350,5 +355,32 @@ class DatabaseSeeder extends Seeder
             'sanction' => Sanction::Warning,
             'parents_informed' => true,
         ], $supervisor);
+    }
+
+    /**
+     * Ouvre l'app parents à la mère de la fratrie (compte 06 333 33 33) et
+     * lui fait déposer un justificatif, en attente d'examen.
+     */
+    private function seedDemoParentAccess(): void
+    {
+        $guardian = Guardian::query()->where('phone', '+242063333333')->firstOrFail();
+
+        if ($guardian->user_id !== null) {
+            return;
+        }
+
+        app(GrantParentAccess::class)->handle($guardian);
+        $parent = User::query()->where('phone', '+242063333333')->firstOrFail();
+
+        $absence = AttendanceRecord::query()
+            ->where('status', AttendanceStatus::Absent)
+            ->whereIn('enrollment_id', Enrollment::query()->whereHas('student.guardians', fn ($query) => $query->whereKey($guardian->id))->select('id'))
+            ->with(['session', 'enrollment'])
+            ->get()
+            ->first(fn (AttendanceRecord $record): bool => AbsenceJustification::query()->where('enrollment_id', $record->enrollment_id)->doesntExist());
+
+        if ($absence !== null) {
+            app(JustifyAbsences::class)->submitByGuardian($absence->enrollment, $absence->session->held_on, $absence->session->held_on, JustificationReason::Family, 'Décès d\'un proche, il était aux obsèques au village.', $parent);
+        }
     }
 }

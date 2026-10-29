@@ -7,16 +7,19 @@ use App\Filament\School\Support\EnrollmentSelect;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\Support\FrenchLabels;
 use App\Models\User;
+use App\Modules\Core\Exceptions\BusinessRuleViolation;
 use App\Modules\SchoolLife\Actions\JustifyAbsences;
 use App\Modules\SchoolLife\Enums\JustificationReason;
 use App\Modules\SchoolLife\Enums\JustificationStatus;
 use App\Modules\SchoolLife\Models\AbsenceJustification;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -80,15 +83,29 @@ class AbsenceJustificationResource extends Resource
                 TextColumn::make('starts_on')->label('Du')->date('d/m/Y')->sortable(),
                 TextColumn::make('ends_on')->label('Au')->date('d/m/Y'),
                 TextColumn::make('reason')->label('Motif'),
-                TextColumn::make('comment')->label('Commentaire')->placeholder('—')->wrap(),
+                TextColumn::make('comment')->label('Commentaire')->placeholder('—')->limit(40)->tooltip(fn (AbsenceJustification $record): ?string => $record->comment),
                 TextColumn::make('status')->label('Statut')->badge(),
-                TextColumn::make('recorder.name')->label('Saisi par')->placeholder('—'),
+                TextColumn::make('recorder.name')->label('Saisi par')->placeholder('—')
+                    ->description(fn (AbsenceJustification $record): ?string => $record->recorder?->hasRole('parent') ? 'via l\'app parents' : null),
             ])
             ->filters([
                 SelectFilter::make('status')->label('Statut')->options(JustificationStatus::class),
                 SelectFilter::make('reason')->label('Motif')->options(JustificationReason::class),
             ])
             ->recordActions([
+                Action::make('accept')
+                    ->label('Accepter')
+                    ->icon(Heroicon::OutlinedCheck)
+                    ->color('success')
+                    ->visible(fn (AbsenceJustification $record): bool => $record->status === JustificationStatus::Pending)
+                    ->action(fn (AbsenceJustification $record) => self::review($record, true)),
+                Action::make('reject')
+                    ->label('Refuser')
+                    ->icon(Heroicon::OutlinedXMark)
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (AbsenceJustification $record): bool => $record->status === JustificationStatus::Pending)
+                    ->action(fn (AbsenceJustification $record) => self::review($record, false)),
                 DeleteAction::make()
                     ->label('Retirer')
                     ->modalDescription('Les absences couvertes redeviendront non justifiées (sauf sur les bulletins déjà publiés).')
@@ -100,6 +117,32 @@ class AbsenceJustificationResource extends Resource
                         return true;
                     }),
             ]);
+    }
+
+    /**
+     * Justificatifs déposés par les parents, en attente d'examen.
+     */
+    public static function getNavigationBadge(): ?string
+    {
+        $pending = AbsenceJustification::query()->where('status', JustificationStatus::Pending)->count();
+
+        return $pending > 0 ? (string) $pending : null;
+    }
+
+    private static function review(AbsenceJustification $record, bool $accept): void
+    {
+        /** @var User $user */
+        $user = Filament::auth()->user();
+
+        try {
+            app(JustifyAbsences::class)->review($record, $accept, $user);
+        } catch (BusinessRuleViolation $exception) {
+            Notification::make()->danger()->title($exception->getMessage())->send();
+
+            return;
+        }
+
+        Notification::make()->success()->title($accept ? 'Justificatif accepté.' : 'Justificatif refusé.')->send();
     }
 
     public static function getPages(): array

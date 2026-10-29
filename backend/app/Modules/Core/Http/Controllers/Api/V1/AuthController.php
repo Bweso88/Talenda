@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -43,6 +44,33 @@ final class AuthController
             'token' => $token->plainTextToken,
             'user' => new UserResource($user),
         ]);
+    }
+
+    /**
+     * Changement de mot de passe, obligatoire à la première connexion avec
+     * un mot de passe provisoire. Les autres appareils sont déconnectés.
+     */
+    public function changePassword(Request $request, RecordAudit $recordAudit): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $request->validate([
+            'current_password' => ['required', 'string', 'current_password:sanctum'],
+            'password' => ['required', 'string', Password::defaults(), 'confirmed', 'different:current_password'],
+        ], attributes: [
+            'password' => 'nouveau mot de passe',
+        ]);
+
+        $user->update([
+            'password' => $request->string('password')->toString(),
+            'must_change_password' => false,
+        ]);
+        $user->tokens()->whereKeyNot($user->currentAccessToken()->getKey())->delete();
+
+        $recordAudit->handle('auth.password_changed', actor: $user);
+
+        return response()->json(['user' => new UserResource($user)]);
     }
 
     public function logout(Request $request): Response

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Enrollments\Models;
 
+use App\Models\User;
 use App\Modules\Core\Concerns\HasPublicUuid;
 use App\Modules\Core\Support\PhoneNumber;
 use App\Modules\Core\Tenancy\BelongsToTenant;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
@@ -28,6 +30,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $email
  * @property string|null $profession
  * @property string|null $address
+ * @property int|null $user_id compte de l'app parents, relié par l'école
+ * @property User|null $user
  * @property-read string $full_name
  */
 #[UseFactory(GuardianFactory::class)]
@@ -65,6 +69,14 @@ class Guardian extends Model
     protected function fullName(): Attribute
     {
         return Attribute::get(fn (): string => trim($this->last_name.' '.$this->first_names));
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
