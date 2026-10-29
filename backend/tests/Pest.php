@@ -87,3 +87,5 @@ function feeGrid(string $levelCode, array $amounts = ['INSCRIPTION' => 25000, 'S
         ]);
     }
 }
+
+pest()->extend(TestCase::class)->in('Unit');

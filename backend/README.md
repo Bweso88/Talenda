@@ -32,10 +32,12 @@ Comptes de démonstration (mot de passe : `talenda-demo`) :
 | Directrice | `05 222 22 22` | Collège Démo de Pointe-Noire |
 | Parent | `06 333 33 33` | Les deux écoles (un seul compte) |
 | Caissier | `06 444 44 10` | Lycée Démo de Brazzaville (caisse ouverte) |
+| Enseignant | `06 444 44 02` | Lycée Démo de Brazzaville (ses matières seulement) |
 
 Le Lycée Démo de Brazzaville contient une structure complète (collège et
 lycée, 3 classes avec coefficients, 3 enseignants) et 7 élèves inscrits,
-dont une fratrie, avec une grille tarifaire et quelques encaissements.
+dont une fratrie, avec une grille tarifaire, quelques encaissements et
+des notes du premier trimestre.
 
 ## Vérifications
 
@@ -60,7 +62,10 @@ Les tests utilisent la base PostgreSQL `talenda_test`.
     import Excel, certificats de scolarité et cartes scolaires (PDF) ;
   - `Finances` : grille tarifaire, plans de paiement, factures, caisse,
     reçus, impayés. Branché sur les autres modules par événements
-    (`FinancesServiceProvider`).
+    (`FinancesServiceProvider`) ;
+  - `Assessments` : notation, saisie des notes, appréciations, conseil de
+    classe, publication des périodes, bulletins (PDF), moyennes annuelles
+    et décisions de fin d'année.
 - `app/Filament/School/` et `app/Filament/Platform/` : écrans des deux
   back-offices.
 - `config/talenda.php` : catalogues des modules, rôles, permissions et

@@ -12,6 +12,10 @@ use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Academic\Models\StaffMember;
 use App\Modules\Academic\Models\Stream;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Academic\Models\Term;
+use App\Modules\Assessments\Actions\SaveScores;
+use App\Modules\Assessments\Models\Assessment;
+use App\Modules\Assessments\Models\AssessmentType;
 use App\Modules\Core\Actions\ProvisionTenant;
 use App\Modules\Core\Actions\SyncRolesAndPermissions;
 use App\Modules\Core\Models\PlatformAdmin;
@@ -28,6 +32,7 @@ use App\Modules\Finances\Models\FeeType;
 use App\Modules\Finances\Models\Invoice;
 use App\Modules\Finances\Models\Payment;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Données de démonstration : deux écoles congolaises et leurs comptes,
@@ -77,6 +82,7 @@ class DatabaseSeeder extends Seeder
             $this->seedDemoFeeGrid();
             $this->seedDemoStudents();
             $this->seedDemoPayments();
+            $this->seedDemoGrades();
         });
 
         app(TenantContext::class)->run($brazzaville, fn () => $brazzaville->settings()->update([
@@ -229,5 +235,44 @@ class DatabaseSeeder extends Seeder
         }
 
         $record->handle($invoices[1], 20000, PaymentMethod::MobileMoney, $cashier, 'MP261028.0915.B71234');
+    }
+
+    /**
+     * Notes du premier trimestre (devoir + composition) dans toutes les
+     * matières, et un compte enseignant pour essayer la saisie.
+     */
+    private function seedDemoGrades(): void
+    {
+        if (Assessment::query()->exists()) {
+            return;
+        }
+
+        $teacherStaff = StaffMember::query()->where('phone', '+242064444402')->firstOrFail();
+        app(GrantStaffAccess::class)->handle($teacherStaff, 'teacher');
+        User::query()->where('phone', '+242064444402')->update(['password' => Hash::make('talenda-demo'), 'must_change_password' => false]);
+
+        $term = Term::query()->orderBy('position')->firstOrFail();
+        $types = AssessmentType::query()->pluck('id', 'code');
+        $faker = fake('fr_FR');
+        $faker->seed(2026);
+
+        foreach (ClassSubject::query()->with('schoolClass')->get() as $classSubject) {
+            $enrollments = $classSubject->schoolClass->enrollments()->pluck('id');
+
+            foreach (['DEVOIR' => 'Devoir n° 1', 'COMPOSITION' => 'Composition du 1er trimestre'] as $code => $title) {
+                $assessment = Assessment::create([
+                    'class_subject_id' => $classSubject->id,
+                    'term_id' => $term->id,
+                    'assessment_type_id' => $types[$code],
+                    'title' => $title,
+                    'held_on' => $term->starts_on->copy()->addWeeks($code === 'DEVOIR' ? 4 : 9),
+                    'max_score' => 20,
+                ]);
+
+                app(SaveScores::class)->handle($assessment, $enrollments->mapWithKeys(fn (int $id): array => [
+                    $id => ['value' => $faker->randomElement([6, 8, 9.5, 10, 11, 12, 12.5, 13, 14, 15, 16.5, 17])],
+                ])->all());
+            }
+        }
     }
 }

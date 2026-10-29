@@ -53,6 +53,12 @@ return [
         'finance.manage',
         'payment.record',
         'payment.reverse',
+        // Évaluations et bulletins (étape 4).
+        'assessment.enter',
+        'assessment.manage',
+        'term.manage',
+        'term.reopen',
+        'report_card.view',
     ],
 
     /*
@@ -69,23 +75,27 @@ return [
             'staff.view', 'staff.manage',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
             'finance.view', 'finance.manage', 'payment.reverse',
+            'assessment.enter', 'assessment.manage', 'term.manage', 'term.reopen', 'report_card.view',
         ],
         'academic_director' => [
             'membership.view',
             'school_year.manage', 'structure.view', 'structure.manage',
             'staff.view',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
+            'assessment.enter', 'assessment.manage', 'term.manage', 'report_card.view',
         ],
         'secretary' => [
             'membership.view', 'structure.view', 'staff.view',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
+            'report_card.view',
         ],
         'accountant' => [
             'structure.view', 'student.view',
             'finance.view', 'finance.manage', 'payment.record', 'payment.reverse',
         ],
         'cashier' => ['structure.view', 'student.view', 'finance.view', 'payment.record'],
-        'teacher' => ['structure.view'],
+        // Saisie limitée à ses propres matières (voir AssessmentPolicy).
+        'teacher' => ['structure.view', 'assessment.enter'],
         'supervisor' => ['structure.view'],
         'parent' => [],
     ],
@@ -205,6 +215,24 @@ return [
                 ],
             ],
             'default_payment_plan' => 'Mensuel',
+            // Notation (§9). Moyenne d'une matière = moyenne pondérée des
+            // moyennes de chaque type d'évaluation. À valider avec l'école
+            // pilote (poids de la composition notamment).
+            'grading' => [
+                'max_score' => 20,
+                'passing_average' => 10,
+                'absence_policy' => 'ignore',
+                'assessment_types' => [
+                    ['code' => 'DEVOIR', 'name' => 'Devoirs et interrogations', 'weight' => 1],
+                    ['code' => 'COMPOSITION', 'name' => 'Composition', 'weight' => 1],
+                ],
+                // Du plus haut au plus bas seuil.
+                'distinctions' => [
+                    ['name' => 'Félicitations', 'min' => 16],
+                    ['name' => 'Encouragements', 'min' => 14],
+                    ['name' => 'Tableau d\'honneur', 'min' => 12],
+                ],
+            ],
             // Matières proposées, par cycle concerné.
             'subjects' => [
                 ['code' => 'FR', 'name' => 'Français', 'cycles' => ['PRIMAIRE', 'COLLEGE', 'LYCEE']],
