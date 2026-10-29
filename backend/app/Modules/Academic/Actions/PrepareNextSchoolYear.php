@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Academic\Actions;
 
+use App\Modules\Academic\Events\NextSchoolYearPrepared;
 use App\Modules\Academic\Models\ClassSubject;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\SchoolYear;
@@ -43,6 +44,8 @@ final class PrepareNextSchoolYear
                         ]);
                     });
                 });
+
+            NextSchoolYearPrepared::dispatch($from, $next);
 
             return $next;
         });

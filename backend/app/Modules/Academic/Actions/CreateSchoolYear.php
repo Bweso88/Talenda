@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Academic\Actions;
 
+use App\Modules\Academic\Events\SchoolYearCreated;
 use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Academic\Models\Term;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
@@ -54,6 +55,8 @@ final class CreateSchoolYear
                     'ends_on' => $this->dateInSchoolYear($term['end'], $startYear, $startMonth),
                 ]);
             }
+
+            SchoolYearCreated::dispatch($schoolYear);
 
             return $schoolYear;
         });

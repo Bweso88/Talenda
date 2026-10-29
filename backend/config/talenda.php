@@ -48,6 +48,11 @@ return [
         'student.manage',
         'enrollment.manage',
         'document.issue',
+        // Finances (étape 3).
+        'finance.view',
+        'finance.manage',
+        'payment.record',
+        'payment.reverse',
     ],
 
     /*
@@ -63,6 +68,7 @@ return [
             'school_year.manage', 'structure.view', 'structure.manage',
             'staff.view', 'staff.manage',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
+            'finance.view', 'finance.manage', 'payment.reverse',
         ],
         'academic_director' => [
             'membership.view',
@@ -74,8 +80,11 @@ return [
             'membership.view', 'structure.view', 'staff.view',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
         ],
-        'accountant' => ['structure.view', 'student.view'],
-        'cashier' => ['structure.view', 'student.view'],
+        'accountant' => [
+            'structure.view', 'student.view',
+            'finance.view', 'finance.manage', 'payment.record', 'payment.reverse',
+        ],
+        'cashier' => ['structure.view', 'student.view', 'finance.view', 'payment.record'],
         'teacher' => ['structure.view'],
         'supervisor' => ['structure.view'],
         'parent' => [],
@@ -169,6 +178,33 @@ return [
                 'leaving_certificate' => 'Certificat de radiation (élève venant d\'une autre école)',
                 'exam_transcript' => 'Relevé de notes de l\'examen (CEPE, BEPC)',
             ],
+            // Types de frais proposés. billing : upfront = dû à l'inscription,
+            // spread = réparti selon le plan de paiement de la famille.
+            // applies_to : all, new (nouveaux élèves), re_enrollment.
+            // optional : ajouté à la demande (tenue, transport…).
+            'fee_types' => [
+                ['code' => 'INSCRIPTION', 'name' => 'Frais d\'inscription', 'billing' => 'upfront', 'applies_to' => 'new', 'optional' => false],
+                ['code' => 'REINSCRIPTION', 'name' => 'Frais de réinscription', 'billing' => 'upfront', 'applies_to' => 're_enrollment', 'optional' => false],
+                ['code' => 'SCOLARITE', 'name' => 'Scolarité', 'billing' => 'spread', 'applies_to' => 'all', 'optional' => false],
+                ['code' => 'TENUE', 'name' => 'Tenue scolaire', 'billing' => 'upfront', 'applies_to' => 'all', 'optional' => true],
+                ['code' => 'EXAMEN', 'name' => 'Frais d\'examen', 'billing' => 'upfront', 'applies_to' => 'all', 'optional' => true],
+            ],
+            // Plans de paiement proposés pour chaque année (modifiables).
+            // Échéances : [libellé, mois, jour, pourcentage de la scolarité].
+            'payment_plans' => [
+                'Mensuel' => [
+                    ['Octobre', 10, 10, 11.12], ['Novembre', 11, 10, 11.11], ['Décembre', 12, 10, 11.11],
+                    ['Janvier', 1, 10, 11.11], ['Février', 2, 10, 11.11], ['Mars', 3, 10, 11.11],
+                    ['Avril', 4, 10, 11.11], ['Mai', 5, 10, 11.11], ['Juin', 6, 10, 11.11],
+                ],
+                'Trimestriel' => [
+                    ['1re tranche', 10, 10, 33.34], ['2e tranche', 1, 10, 33.33], ['3e tranche', 4, 10, 33.33],
+                ],
+                'Annuel' => [
+                    ['Paiement unique', 10, 10, 100],
+                ],
+            ],
+            'default_payment_plan' => 'Mensuel',
             // Matières proposées, par cycle concerné.
             'subjects' => [
                 ['code' => 'FR', 'name' => 'Français', 'cycles' => ['PRIMAIRE', 'COLLEGE', 'LYCEE']],

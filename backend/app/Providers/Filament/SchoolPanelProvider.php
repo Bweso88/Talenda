@@ -8,6 +8,7 @@ use App\Filament\School\Support\NavigationGroups;
 use App\Filament\Support\InitialsAvatarProvider;
 use App\Modules\Core\Http\Middleware\SyncFilamentTenant;
 use App\Modules\Core\Models\Tenant;
+use App\Modules\Finances\Http\Controllers\ReceiptController;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -22,6 +23,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class SchoolPanelProvider extends PanelProvider
@@ -36,11 +38,16 @@ class SchoolPanelProvider extends PanelProvider
             ->login(Login::class)
             ->tenant(Tenant::class, slugAttribute: 'slug')
             ->tenantProfile(EditSchoolProfile::class)
+            ->authenticatedTenantRoutes(function (): void {
+                Route::get('recus/{payment}', ReceiptController::class)->name('receipt');
+            })
             ->navigationGroups([
                 NavigationGroups::STUDENTS,
+                NavigationGroups::FINANCES,
                 NavigationGroups::SCHOOL_YEAR,
                 NavigationGroups::STAFF,
                 NavigationGroups::SETTINGS,
+                NavigationGroups::FINANCE_SETTINGS,
             ])
             ->tenantMiddleware([
                 SyncFilamentTenant::class,

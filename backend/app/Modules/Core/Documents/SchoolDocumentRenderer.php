@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Enrollments\Documents;
+namespace App\Modules\Core\Documents;
 
 use App\Modules\Core\Models\Tenant;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,7 +20,7 @@ final class SchoolDocumentRenderer
     /**
      * @param  array<string, mixed>  $data
      */
-    public function render(Tenant $tenant, string $view, array $data, string $orientation = 'portrait'): string
+    public function render(Tenant $tenant, string $view, array $data, string $orientation = 'portrait', string $paper = 'a4'): string
     {
         $tenant->loadMissing('settings');
 
@@ -30,7 +30,7 @@ final class SchoolDocumentRenderer
             'settings' => $tenant->settings,
             'logo' => $this->imageDataUri('public', $tenant->settings?->logo_path),
         ])
-            ->setPaper('a4', $orientation)
+            ->setPaper($paper, $orientation)
             // N'embarquer que les caractères utilisés : PDF bien plus légers.
             ->setOption('isFontSubsettingEnabled', true)
             ->setOption('isRemoteEnabled', false)

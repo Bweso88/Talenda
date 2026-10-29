@@ -11,6 +11,10 @@ final class NavigationGroups
 
     public const STUDENTS = 'Élèves';
 
+    public const FINANCES = 'Finances';
+
+    public const FINANCE_SETTINGS = 'Paramètres financiers';
+
     public const STAFF = 'Personnel';
 
     public const SETTINGS = 'Paramètres';

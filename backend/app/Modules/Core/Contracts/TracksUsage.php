@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Academic\Contracts;
+namespace App\Modules\Core\Contracts;
 
 /**
  * Élément de structure qui ne peut être supprimé tant qu'il est utilisé

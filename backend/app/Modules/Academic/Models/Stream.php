@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Academic\Models;
 
-use App\Modules\Academic\Contracts\TracksUsage;
 use App\Modules\Academic\Policies\StructurePolicy;
+use App\Modules\Core\Contracts\TracksUsage;
 use App\Modules\Core\Tenancy\BelongsToTenant;
 use Database\Factories\StreamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

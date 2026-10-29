@@ -8,6 +8,7 @@ use App\Filament\School\Resources\Students\Pages\ImportStudents;
 use App\Filament\School\Resources\Students\Pages\ListStudents;
 use App\Filament\School\Resources\Students\RelationManagers\EnrollmentsRelationManager;
 use App\Filament\School\Resources\Students\RelationManagers\GuardianLinksRelationManager;
+use App\Filament\School\Resources\Students\RelationManagers\InvoicesRelationManager;
 use App\Filament\School\Resources\Students\Schemas\StudentForm;
 use App\Filament\School\Resources\Students\Tables\StudentsTable;
 use App\Filament\School\Support\NavigationGroups;
@@ -65,6 +66,7 @@ class StudentResource extends Resource
         return [
             GuardianLinksRelationManager::class,
             EnrollmentsRelationManager::class,
+            InvoicesRelationManager::class,
         ];
     }
 

@@ -1,10 +1,14 @@
 <?php
 
 use App\Models\User;
+use App\Modules\Academic\Models\Level;
+use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Core\Actions\ProvisionTenant;
 use App\Modules\Core\Actions\SyncRolesAndPermissions;
 use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Tenancy\TenantContext;
+use App\Modules\Finances\Models\FeeAmount;
+use App\Modules\Finances\Models\FeeType;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -61,4 +65,25 @@ function actInSchool(User $user, Tenant $school): void
     Filament::setCurrentPanel('school');
     Filament::setTenant($school);
     app(TenantContext::class)->set($school);
+}
+
+/**
+ * Grille tarifaire minimale pour un niveau de l'année ouverte :
+ * inscription (nouveaux élèves) et scolarité.
+ *
+ * @param  array<string, int>  $amounts  code du type de frais => montant
+ */
+function feeGrid(string $levelCode, array $amounts = ['INSCRIPTION' => 25000, 'SCOLARITE' => 180000]): void
+{
+    $yearId = SchoolYear::query()->open()->value('id');
+    $levelId = Level::firstWhere('code', $levelCode)->id;
+
+    foreach ($amounts as $code => $amount) {
+        FeeAmount::create([
+            'school_year_id' => $yearId,
+            'level_id' => $levelId,
+            'fee_type_id' => FeeType::firstWhere('code', $code)->id,
+            'amount' => $amount,
+        ]);
+    }
 }

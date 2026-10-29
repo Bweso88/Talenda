@@ -9,6 +9,7 @@ use App\Modules\Core\Tenancy\BelongsToTenant;
 use App\Modules\Enrollments\Enums\EnrollmentStatus;
 use App\Modules\Enrollments\Enums\Gender;
 use App\Modules\Enrollments\Policies\StudentPolicy;
+use App\Modules\Finances\Models\Invoice;
 use Database\Factories\StudentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -110,6 +111,16 @@ class Student extends Model
             ->using(StudentGuardian::class)
             ->withPivot(['id', 'relationship', 'is_primary_contact', 'is_financially_responsible'])
             ->withTimestamps();
+    }
+
+    /**
+     * Factures de scolarité (module Finances), une par inscription.
+     *
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 
     /**

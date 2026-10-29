@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Modules\Academic\Actions\GrantStaffAccess;
 use App\Modules\Academic\Enums\StaffPosition;
 use App\Modules\Academic\Models\ClassSubject;
 use App\Modules\Academic\Models\Level;
@@ -18,6 +19,14 @@ use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Tenancy\TenantContext;
 use App\Modules\Enrollments\Actions\EnrollNewStudent;
 use App\Modules\Enrollments\Models\Student;
+use App\Modules\Finances\Actions\CashDesk;
+use App\Modules\Finances\Actions\RecordPayment;
+use App\Modules\Finances\Enums\PaymentMethod;
+use App\Modules\Finances\Models\CashRegister;
+use App\Modules\Finances\Models\FeeAmount;
+use App\Modules\Finances\Models\FeeType;
+use App\Modules\Finances\Models\Invoice;
+use App\Modules\Finances\Models\Payment;
 use Illuminate\Database\Seeder;
 
 /**
@@ -65,7 +74,9 @@ class DatabaseSeeder extends Seeder
 
         app(TenantContext::class)->run($brazzaville, function (): void {
             $this->seedDemoClasses();
+            $this->seedDemoFeeGrid();
             $this->seedDemoStudents();
+            $this->seedDemoPayments();
         });
 
         app(TenantContext::class)->run($brazzaville, fn () => $brazzaville->settings()->update([
@@ -163,5 +174,60 @@ class DatabaseSeeder extends Seeder
                 documents: ['birth_certificate', 'photos'],
             );
         }
+    }
+
+    /**
+     * Grille tarifaire indicative (en FCFA), à remplacer par celle de
+     * l'école pilote.
+     */
+    private function seedDemoFeeGrid(): void
+    {
+        $schoolYearId = SchoolYear::query()->open()->value('id');
+        $feeTypes = FeeType::query()->pluck('id', 'code');
+
+        $grid = [
+            '6E' => 180000, '5E' => 180000, '4E' => 190000, '3E' => 210000,
+            '2ND' => 240000, '1RE' => 250000, 'TLE' => 270000,
+        ];
+
+        foreach (Level::query()->whereIn('code', array_keys($grid))->get() as $level) {
+            foreach (['INSCRIPTION' => 25000, 'REINSCRIPTION' => 15000, 'SCOLARITE' => $grid[$level->code], 'TENUE' => 12500] as $code => $amount) {
+                FeeAmount::query()->firstOrCreate(
+                    ['school_year_id' => $schoolYearId, 'level_id' => $level->id, 'fee_type_id' => $feeTypes[$code]],
+                    ['amount' => $amount],
+                );
+            }
+        }
+    }
+
+    /**
+     * Un caissier avec une caisse ouverte et quelques encaissements.
+     */
+    private function seedDemoPayments(): void
+    {
+        if (Payment::query()->exists()) {
+            return;
+        }
+
+        $cashierStaff = StaffMember::create([
+            'first_name' => 'Daniel',
+            'last_name' => 'Bouanga',
+            'position' => StaffPosition::Cashier,
+            'phone' => '+242064444410',
+        ]);
+        app(GrantStaffAccess::class)->handle($cashierStaff, 'cashier');
+        $cashier = User::query()->where('phone', '+242064444410')->firstOrFail();
+        $cashier->update(['password' => 'talenda-demo', 'must_change_password' => false]);
+
+        app(CashDesk::class)->open(CashRegister::query()->firstOrFail(), 20000, $cashier);
+
+        $invoices = Invoice::query()->with('student')->orderBy('id')->get();
+        $record = app(RecordPayment::class);
+
+        foreach ($invoices->take(5) as $index => $invoice) {
+            $record->handle($invoice, [70000, 45000, 25000, 120000, 25000][$index], PaymentMethod::Cash, $cashier, payerName: 'Parent de '.$invoice->student->first_names);
+        }
+
+        $record->handle($invoices[1], 20000, PaymentMethod::MobileMoney, $cashier, 'MP261028.0915.B71234');
     }
 }

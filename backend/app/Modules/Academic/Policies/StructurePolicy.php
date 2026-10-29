@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Academic\Policies;
 
 use App\Models\User;
-use App\Modules\Academic\Contracts\TracksUsage;
+use App\Modules\Core\Contracts\TracksUsage;
 
 /**
  * Éléments de structure de l'école : cycles, niveaux, séries, matières.

@@ -10,6 +10,7 @@ use App\Modules\Academic\Actions\ChangeSchoolYearStatus;
 use App\Modules\Academic\Actions\CreateSchoolYear;
 use App\Modules\Core\Enums\MembershipStatus;
 use App\Modules\Core\Enums\TenantStatus;
+use App\Modules\Core\Events\TenantProvisioned;
 use App\Modules\Core\Models\Membership;
 use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Support\CountryPresets;
@@ -81,6 +82,8 @@ final class ProvisionTenant
                     $this->createSchoolYear->handle($this->currentSchoolYearStart($tenant)),
                 );
             });
+
+            TenantProvisioned::dispatch($tenant);
 
             $this->recordAudit->handle(
                 action: 'tenant.provisioned',
