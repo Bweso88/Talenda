@@ -17,6 +17,8 @@ use App\Modules\Assessments\Support\ClassTermResults;
 use App\Modules\Assessments\Support\ComputeClassTermResults;
 use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
+use App\Modules\SchoolLife\Support\AttendanceTotal;
+use App\Modules\SchoolLife\Support\AttendanceTotals;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -113,10 +115,13 @@ final class ManageTerm
             ->get()
             ->groupBy('enrollment_id');
 
+        $attendance = AttendanceTotals::between(array_keys($results->enrollments), $term->starts_on, $term->ends_on);
+
         foreach ($results->enrollments as $enrollmentId => $enrollment) {
             $general = $results->generals[$enrollmentId];
             $rank = $results->rank($enrollmentId);
             $studentComments = $comments->get($enrollmentId, collect());
+            $absences = $attendance[$enrollmentId] ?? new AttendanceTotal;
 
             $termResult = TermResult::create([
                 'term_id' => $term->id,
@@ -134,6 +139,9 @@ final class ManageTerm
                 'distinction' => $settings->distinctionFor($results->average($enrollmentId)),
                 'council_comment' => $studentComments->firstWhere('class_subject_id', null)?->body,
                 'head_teacher_name' => $schoolClass->headTeacher?->full_name,
+                'absence_minutes' => $absences->absenceMinutes,
+                'justified_absence_minutes' => $absences->justifiedAbsenceMinutes,
+                'late_count' => $absences->lateCount,
                 'published_at' => $publishedAt,
             ]);
 

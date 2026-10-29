@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\Levels;
 use App\Filament\School\Resources\Levels\Pages\ManageLevels;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\Level;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -23,6 +24,8 @@ use UnitEnum;
 
 class LevelResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Level::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;

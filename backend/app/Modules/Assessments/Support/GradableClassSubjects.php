@@ -7,6 +7,7 @@ namespace App\Modules\Assessments\Support;
 use App\Models\User;
 use App\Modules\Academic\Enums\SchoolYearStatus;
 use App\Modules\Academic\Models\ClassSubject;
+use App\Modules\Academic\Support\TeacherIdentity;
 use Illuminate\Database\Eloquent\Builder;
 
 /**

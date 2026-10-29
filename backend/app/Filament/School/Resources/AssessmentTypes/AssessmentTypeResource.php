@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\AssessmentTypes;
 use App\Filament\School\Resources\AssessmentTypes\Pages\ManageAssessmentTypes;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Assessments\Models\AssessmentType;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class AssessmentTypeResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = AssessmentType::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;

@@ -44,6 +44,7 @@ class SchoolPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroups::STUDENTS,
                 NavigationGroups::GRADES,
+                NavigationGroups::SCHOOL_LIFE,
                 NavigationGroups::FINANCES,
                 NavigationGroups::SCHOOL_YEAR,
                 NavigationGroups::STAFF,

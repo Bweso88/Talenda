@@ -10,6 +10,8 @@ use App\Modules\Enrollments\Enums\EnrollmentStatus;
 use App\Modules\Enrollments\Enums\Gender;
 use App\Modules\Enrollments\Policies\StudentPolicy;
 use App\Modules\Finances\Models\Invoice;
+use App\Modules\SchoolLife\Models\AttendanceRecord;
+use App\Modules\SchoolLife\Models\DisciplinaryIncident;
 use Database\Factories\StudentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
@@ -121,6 +124,25 @@ class Student extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * Absences et retards relevés aux appels (module Vie scolaire), toutes
+     * années confondues.
+     *
+     * @return HasManyThrough<AttendanceRecord, Enrollment, $this>
+     */
+    public function attendanceRecords(): HasManyThrough
+    {
+        return $this->hasManyThrough(AttendanceRecord::class, Enrollment::class);
+    }
+
+    /**
+     * @return HasManyThrough<DisciplinaryIncident, Enrollment, $this>
+     */
+    public function disciplinaryIncidents(): HasManyThrough
+    {
+        return $this->hasManyThrough(DisciplinaryIncident::class, Enrollment::class);
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Filament\School\Resources\CashSessions\Pages\ViewCashSession;
 use App\Filament\School\Resources\CashSessions\Schemas\CashSessionInfolist;
 use App\Filament\School\Resources\CashSessions\Tables\CashSessionsTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Finances\Models\CashSession;
 use BackedEnum;
 use Filament\Facades\Filament;
@@ -23,6 +24,8 @@ use UnitEnum;
  */
 class CashSessionResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = CashSession::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;

@@ -101,7 +101,10 @@
                     <td style="width: 26%;">
                         Moyenne de la classe : {{ $num($result->class_average) }}<br>
                         Plus forte moyenne : {{ $num($result->class_highest) }}<br>
-                        Plus faible moyenne : {{ $num($result->class_lowest) }}
+                        Plus faible moyenne : {{ $num($result->class_lowest) }}<br>
+                        <br>
+                        Absences : {{ $result->absencesLabel() }}<br>
+                        Retards : {{ $result->late_count }}
                     </td>
                     <td>
                         <strong>Appréciation du conseil de classe</strong><br>

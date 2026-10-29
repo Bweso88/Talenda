@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Assessments\Support;
+namespace App\Modules\Academic\Support;
 
 use App\Models\User;
 use App\Modules\Academic\Models\StaffMember;

@@ -9,6 +9,7 @@ use App\Filament\School\Resources\Assessments\Pages\ListAssessments;
 use App\Filament\School\Resources\Assessments\Schemas\AssessmentForm;
 use App\Filament\School\Resources\Assessments\Tables\AssessmentsTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Models\User;
 use App\Modules\Assessments\Models\Assessment;
 use App\Modules\Assessments\Support\GradableClassSubjects;
@@ -24,6 +25,8 @@ use UnitEnum;
 
 class AssessmentResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Assessment::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPencilSquare;

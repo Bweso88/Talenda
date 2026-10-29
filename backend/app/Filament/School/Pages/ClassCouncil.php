@@ -19,6 +19,8 @@ use App\Modules\Assessments\Models\TermResult;
 use App\Modules\Assessments\Support\ClassTermResults;
 use App\Modules\Assessments\Support\ComputeClassTermResults;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
+use App\Modules\SchoolLife\Support\AttendanceTotal;
+use App\Modules\SchoolLife\Support\AttendanceTotals;
 use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
@@ -223,25 +225,27 @@ class ClassCouncil extends Page
         }
 
         $editable = $term->status !== TermStatus::Published && $this->userCan('term.manage');
-        $rows = $term->status === TermStatus::Published ? $this->publishedRows($term, $schoolClass) : $this->provisionalRows(app(ComputeClassTermResults::class)->handle($term, $schoolClass));
+        $rows = $term->status === TermStatus::Published ? $this->publishedRows($term, $schoolClass) : $this->provisionalRows(app(ComputeClassTermResults::class)->handle($term, $schoolClass), $term);
 
         $grids = [Grid::make(12)->components([
             Text::make('Rang')->weight('bold')->columnSpan(1),
-            Text::make('Élève')->weight('bold')->columnSpan(4),
+            Text::make('Élève')->weight('bold')->columnSpan(3),
             Text::make('Moyenne')->weight('bold')->columnSpan(1),
             Text::make('Mention')->weight('bold')->columnSpan(2),
-            Text::make('Appréciation du conseil')->weight('bold')->columnSpan(4),
+            Text::make('Absences')->weight('bold')->columnSpan(2),
+            Text::make('Appréciation du conseil')->weight('bold')->columnSpan(3),
         ])];
 
         foreach ($rows as $row) {
             $grids[] = Grid::make(12)->components([
                 Text::make($row['rank'])->columnSpan(1),
-                Text::make($row['name'])->weight('bold')->columnSpan(4),
+                Text::make($row['name'])->weight('bold')->columnSpan(3),
                 Text::make($row['average'])->columnSpan(1),
                 Text::make($row['distinction'])->color('success')->columnSpan(2),
+                Text::make($row['absences'])->columnSpan(2),
                 $editable
-                    ? TextInput::make("comments.{$row['enrollment_id']}")->hiddenLabel()->maxLength(500)->columnSpan(4)
-                    : Text::make($row['comment'])->columnSpan(4),
+                    ? TextInput::make("comments.{$row['enrollment_id']}")->hiddenLabel()->maxLength(500)->columnSpan(3)
+                    : Text::make($row['comment'])->columnSpan(3),
             ]);
         }
 
@@ -249,11 +253,12 @@ class ClassCouncil extends Page
     }
 
     /**
-     * @return list<array{enrollment_id: int, rank: string, name: string, average: string, distinction: string, comment: string}>
+     * @return list<array{enrollment_id: int, rank: string, name: string, average: string, distinction: string, absences: string, comment: string}>
      */
-    private function provisionalRows(ClassTermResults $results): array
+    private function provisionalRows(ClassTermResults $results, Term $term): array
     {
         $settings = GradingSetting::current();
+        $attendance = AttendanceTotals::between(array_keys($results->enrollments), $term->starts_on, $term->ends_on);
         $rows = [];
 
         foreach ($results->enrollments as $enrollmentId => $enrollment) {
@@ -266,6 +271,7 @@ class ClassCouncil extends Page
                 'name' => $enrollment->student->full_name,
                 'average' => $average === null ? '—' : number_format($average, 2, ',', ''),
                 'distinction' => (string) $settings->distinctionFor($average),
+                'absences' => ($attendance[$enrollmentId] ?? new AttendanceTotal)->shortLabel(),
                 'comment' => '',
             ];
         }
@@ -276,7 +282,7 @@ class ClassCouncil extends Page
     }
 
     /**
-     * @return list<array{enrollment_id: int, rank: string, name: string, average: string, distinction: string, comment: string}>
+     * @return list<array{enrollment_id: int, rank: string, name: string, average: string, distinction: string, absences: string, comment: string}>
      */
     private function publishedRows(Term $term, SchoolClass $schoolClass): array
     {
@@ -292,6 +298,7 @@ class ClassCouncil extends Page
                 'name' => $result->enrollment->student->full_name,
                 'average' => $result->average === null ? '—' : number_format((float) $result->average, 2, ',', ''),
                 'distinction' => (string) $result->distinction,
+                'absences' => (new AttendanceTotal($result->absence_minutes, $result->justified_absence_minutes, $result->late_count))->shortLabel(),
                 'comment' => (string) $result->council_comment,
             ])
             ->values()

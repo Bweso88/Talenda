@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\Subjects;
 use App\Filament\School\Resources\Subjects\Pages\ManageSubjects;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\Subject;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class SubjectResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Subject::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;

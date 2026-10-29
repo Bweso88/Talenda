@@ -428,12 +428,15 @@ annulation de paiement), avec motif et auteur.
   paramétrage de l'école).
 
 ### 8.6 Vie scolaire
-- `attendance_sessions` (appel : classe × date × créneau) et
-  `attendance_records` (élève, statut `present` / `absent` / `late`, motif).
-- `absence_justifications` : justification par le parent ou la vie
-  scolaire, pièce jointe, validation.
-- V2 : `disciplinary_incidents`, `sanctions`, `timetable_slots`,
-  `rooms`.
+- `attendance_slots` : créneaux d'appel de l'école (matin, après-midi…).
+- `attendance_sessions` (appel : classe × date × créneau, durée recopiée)
+  et `attendance_records` (absents et retardataires seulement : statut
+  `absent` / `late`, minutes de retard, remarque).
+- `absence_justifications` : période couverte, motif, statut (`accepted`
+  si saisi par l'école, `pending` si déposé par un parent).
+- `disciplinary_incidents` : faits, sanction (rappel à l'ordre →
+  exclusion définitive), jours d'exclusion, parents informés.
+- V2 : `timetable_slots`, `rooms`.
 
 ### 8.7 Communication
 - `announcements` + `announcement_targets` (école, cycle, niveau, classe,
@@ -724,5 +727,13 @@ l'étape N.
 | 2026-11-02 | Bulletin PDF généré à la demande à partir des résultats figés, sans stockage de fichier | Toujours identique au bulletin publié, rien à stocker sur un disque non permanent (Laravel Cloud) |
 | 2026-11-02 | Un enseignant ne voit et ne note que ses propres classes-matières ; l'évaluation d'un autre enseignant répond « introuvable » (404) | Ne pas révéler l'existence de données hors de son périmètre |
 | 2026-11-02 | Élève parti en cours de période exclu du classement ; moyenne annuelle = moyenne des périodes publiées ; décisions de fin d'année proposées (passage, admis, redoublement) puis validées par la direction | Classement juste ; la décision reste humaine |
-| 2026-11-02 | Pas d'absences sur le bulletin pour l'instant | Elles viendront avec le module Vie scolaire |
+| 2026-11-02 | Pas d'absences sur le bulletin pour l'instant | Elles viendront avec le module Vie scolaire (fait le 2026-11-03) |
+| 2026-11-03 | Module `SchoolLife` (vie scolaire) : créneaux d'appel par école, appels par classe × jour × créneau, absences et retards, justificatifs, registre de discipline | Étape 5 (option A) ; prépare le bulletin complet et l'app des parents |
+| 2026-11-03 | Seuls les absents et les retardataires sont enregistrés ; un appel sans ligne = toute la classe présente ; refaire l'appel le corrige | Saisie rapide sur téléphone (tout le monde présent par défaut), peu de données |
+| 2026-11-03 | Absences comptées en **heures** : durée du créneau recopiée sur l'appel (créneaux par défaut : matin 7 h 30 – 12 h 30, après-midi 14 h 30 – 17 h 30) | Usage des bulletins congolais ; un changement d'horaires ne modifie pas les absences passées |
+| 2026-11-03 | Caractère « justifié » **calculé** : un justificatif accepté couvre une période de dates ; pas de lien stocké absence → justificatif | Un certificat médical couvre plusieurs jours, même déposé avant ou après l'appel ; rien à resynchroniser |
+| 2026-11-03 | L'enseignant fait l'appel de ses classes (matières ou professeur principal), **le jour même** ; la vie scolaire (surveillant, censeur, direction) à toute date et justifie | Limite les corrections après coup ; nouveau rôle `supervisor` doté des droits de vie scolaire |
+| 2026-11-03 | Absences et retards figés sur le bulletin à la publication ; les appels d'une période publiée ne se modifient plus ; un justificatif tardif ne change pas un bulletin publié | Même principe que les moyennes : un bulletin publié ne change plus |
+| 2026-11-03 | Date du jour calculée à l'heure de l'école (`SchoolClock`), pas du serveur (UTC) | Un appel fait tôt le matin ou tard le soir compte pour le bon jour |
+| 2026-11-03 | Pièce jointe des justificatifs (scan du certificat) non stockée pour l'instant | Pas de stockage permanent sur Laravel Cloud tant qu'aucun bucket n'est attaché ; justificatifs déposés par les parents prévus avec l'app (statut « à examiner ») |
 | 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |

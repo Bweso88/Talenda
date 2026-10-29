@@ -13,6 +13,8 @@ final class NavigationGroups
 
     public const GRADES = 'Notes et bulletins';
 
+    public const SCHOOL_LIFE = 'Vie scolaire';
+
     public const FINANCES = 'Finances';
 
     public const FINANCE_SETTINGS = 'Paramètres financiers';

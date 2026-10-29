@@ -8,6 +8,7 @@ use App\Filament\School\Resources\PaymentPlans\Pages\ListPaymentPlans;
 use App\Filament\School\Resources\PaymentPlans\Schemas\PaymentPlanForm;
 use App\Filament\School\Resources\PaymentPlans\Tables\PaymentPlansTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Finances\Models\PaymentPlan;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,6 +19,8 @@ use UnitEnum;
 
 class PaymentPlanResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = PaymentPlan::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendar;

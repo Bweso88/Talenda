@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\FeeTypes;
 use App\Filament\School\Resources\FeeTypes\Pages\ManageFeeTypes;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Finances\Enums\FeeAppliesTo;
 use App\Modules\Finances\Enums\FeeBilling;
 use App\Modules\Finances\Models\FeeType;
@@ -24,6 +25,8 @@ use UnitEnum;
 
 class FeeTypeResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = FeeType::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;

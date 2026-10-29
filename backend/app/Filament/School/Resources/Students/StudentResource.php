@@ -6,12 +6,15 @@ use App\Filament\School\Resources\Students\Pages\CreateStudent;
 use App\Filament\School\Resources\Students\Pages\EditStudent;
 use App\Filament\School\Resources\Students\Pages\ImportStudents;
 use App\Filament\School\Resources\Students\Pages\ListStudents;
+use App\Filament\School\Resources\Students\RelationManagers\AttendanceRecordsRelationManager;
+use App\Filament\School\Resources\Students\RelationManagers\DisciplinaryIncidentsRelationManager;
 use App\Filament\School\Resources\Students\RelationManagers\EnrollmentsRelationManager;
 use App\Filament\School\Resources\Students\RelationManagers\GuardianLinksRelationManager;
 use App\Filament\School\Resources\Students\RelationManagers\InvoicesRelationManager;
 use App\Filament\School\Resources\Students\Schemas\StudentForm;
 use App\Filament\School\Resources\Students\Tables\StudentsTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Enrollments\Models\Student;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -23,6 +26,8 @@ use UnitEnum;
 
 class StudentResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Student::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
@@ -67,6 +72,8 @@ class StudentResource extends Resource
             GuardianLinksRelationManager::class,
             EnrollmentsRelationManager::class,
             InvoicesRelationManager::class,
+            AttendanceRecordsRelationManager::class,
+            DisciplinaryIncidentsRelationManager::class,
         ];
     }
 

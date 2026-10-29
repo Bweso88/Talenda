@@ -9,6 +9,7 @@ use App\Filament\School\Resources\Invoices\RelationManagers\PaymentsRelationMana
 use App\Filament\School\Resources\Invoices\Schemas\InvoiceInfolist;
 use App\Filament\School\Resources\Invoices\Tables\InvoicesTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Finances\Models\Invoice;
 use App\Modules\Finances\Support\InvoiceStatement;
 use BackedEnum;
@@ -21,6 +22,8 @@ use WeakMap;
 
 class InvoiceResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Invoice::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCurrencyDollar;

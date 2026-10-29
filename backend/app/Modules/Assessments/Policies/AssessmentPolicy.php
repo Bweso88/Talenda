@@ -7,8 +7,8 @@ namespace App\Modules\Assessments\Policies;
 use App\Models\User;
 use App\Modules\Academic\Enums\TermStatus;
 use App\Modules\Academic\Models\ClassSubject;
+use App\Modules\Academic\Support\TeacherIdentity;
 use App\Modules\Assessments\Models\Assessment;
-use App\Modules\Assessments\Support\TeacherIdentity;
 
 /**
  * Un enseignant ne voit et ne note que ses propres matières ; la direction

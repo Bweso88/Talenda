@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\Cycles;
 use App\Filament\School\Resources\Cycles\Pages\ManageCycles;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\Cycle;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class CycleResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Cycle::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquare3Stack3d;

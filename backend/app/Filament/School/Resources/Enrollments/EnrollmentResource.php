@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\Enrollments;
 use App\Filament\School\Resources\Enrollments\Pages\ListEnrollments;
 use App\Filament\School\Resources\Enrollments\Tables\EnrollmentsTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Enrollments\Models\Enrollment;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,6 +20,8 @@ use UnitEnum;
  */
 class EnrollmentResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Enrollment::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;

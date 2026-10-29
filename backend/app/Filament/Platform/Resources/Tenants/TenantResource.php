@@ -7,6 +7,7 @@ use App\Filament\Platform\Resources\Tenants\Pages\EditTenant;
 use App\Filament\Platform\Resources\Tenants\Pages\ListTenants;
 use App\Filament\Platform\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Platform\Resources\Tenants\Tables\TenantsTable;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Core\Models\Tenant;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class TenantResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Tenant::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;

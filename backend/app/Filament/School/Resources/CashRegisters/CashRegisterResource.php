@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\CashRegisters;
 use App\Filament\School\Resources\CashRegisters\Pages\ManageCashRegisters;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Finances\Models\CashRegister;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -22,6 +23,8 @@ use UnitEnum;
 
 class CashRegisterResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = CashRegister::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxStack;

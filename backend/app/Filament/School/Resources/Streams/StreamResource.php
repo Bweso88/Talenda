@@ -5,6 +5,7 @@ namespace App\Filament\School\Resources\Streams;
 use App\Filament\School\Resources\Streams\Pages\ManageStreams;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\School\Support\TenantUnique;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\Stream;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class StreamResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = Stream::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;

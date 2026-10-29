@@ -9,6 +9,7 @@ use App\Filament\School\Resources\SchoolYears\RelationManagers\TermsRelationMana
 use App\Filament\School\Resources\SchoolYears\Schemas\SchoolYearForm;
 use App\Filament\School\Resources\SchoolYears\Tables\SchoolYearsTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\SchoolYear;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class SchoolYearResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = SchoolYear::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;

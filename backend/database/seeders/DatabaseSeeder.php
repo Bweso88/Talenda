@@ -20,8 +20,10 @@ use App\Modules\Core\Actions\ProvisionTenant;
 use App\Modules\Core\Actions\SyncRolesAndPermissions;
 use App\Modules\Core\Models\PlatformAdmin;
 use App\Modules\Core\Models\Tenant;
+use App\Modules\Core\Support\SchoolClock;
 use App\Modules\Core\Tenancy\TenantContext;
 use App\Modules\Enrollments\Actions\EnrollNewStudent;
+use App\Modules\Enrollments\Models\Enrollment;
 use App\Modules\Enrollments\Models\Student;
 use App\Modules\Finances\Actions\CashDesk;
 use App\Modules\Finances\Actions\RecordPayment;
@@ -31,7 +33,18 @@ use App\Modules\Finances\Models\FeeAmount;
 use App\Modules\Finances\Models\FeeType;
 use App\Modules\Finances\Models\Invoice;
 use App\Modules\Finances\Models\Payment;
+use App\Modules\SchoolLife\Actions\JustifyAbsences;
+use App\Modules\SchoolLife\Actions\RecordIncident;
+use App\Modules\SchoolLife\Actions\TakeAttendance;
+use App\Modules\SchoolLife\Enums\AttendanceStatus;
+use App\Modules\SchoolLife\Enums\JustificationReason;
+use App\Modules\SchoolLife\Enums\Sanction;
+use App\Modules\SchoolLife\Models\AttendanceRecord;
+use App\Modules\SchoolLife\Models\AttendanceSession;
+use App\Modules\SchoolLife\Models\AttendanceSlot;
+use App\Modules\SchoolLife\Support\ClassRoll;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -83,6 +96,7 @@ class DatabaseSeeder extends Seeder
             $this->seedDemoStudents();
             $this->seedDemoPayments();
             $this->seedDemoGrades();
+            $this->seedDemoSchoolLife();
         });
 
         app(TenantContext::class)->run($brazzaville, fn () => $brazzaville->settings()->update([
@@ -180,6 +194,9 @@ class DatabaseSeeder extends Seeder
                 documents: ['birth_certificate', 'photos'],
             );
         }
+
+        // Inscrits à la rentrée, pas le jour où la démonstration est créée.
+        Enrollment::query()->update(['enrolled_on' => SchoolYear::query()->open()->value('starts_on')]);
     }
 
     /**
@@ -274,5 +291,64 @@ class DatabaseSeeder extends Seeder
                 ])->all());
             }
         }
+    }
+
+    /**
+     * Surveillant général, appels des derniers jours de classe avec
+     * quelques absences et retards, un justificatif et un incident.
+     */
+    private function seedDemoSchoolLife(): void
+    {
+        if (AttendanceSession::query()->exists()) {
+            return;
+        }
+
+        $supervisorStaff = StaffMember::create([
+            'first_name' => 'Rodrigue',
+            'last_name' => 'Ngoma',
+            'position' => StaffPosition::Supervisor,
+            'phone' => '+242064444420',
+        ]);
+        app(GrantStaffAccess::class)->handle($supervisorStaff, 'supervisor');
+        $supervisor = User::query()->where('phone', '+242064444420')->firstOrFail();
+        $supervisor->update(['password' => 'talenda-demo', 'must_change_password' => false]);
+
+        $faker = fake('fr_FR');
+        $faker->seed(242);
+        $slots = AttendanceSlot::query()->orderBy('position')->get();
+        $year = SchoolYear::query()->open()->firstOrFail();
+        $days = collect(range(1, 10))
+            ->map(fn (int $daysAgo) => SchoolClock::today()->subDays($daysAgo))
+            ->filter(fn (Carbon $day): bool => $day->isWeekday() && $day->gte($year->starts_on))
+            ->take(5);
+
+        foreach (SchoolClass::query()->get() as $schoolClass) {
+            foreach ($days as $day) {
+                foreach ($slots as $slot) {
+                    $entries = ClassRoll::on($schoolClass, $day)->mapWithKeys(fn ($enrollment): array => [$enrollment->id => match (true) {
+                        $faker->boolean(8) => ['status' => 'absent'],
+                        $faker->boolean(6) => ['status' => 'late', 'late_minutes' => $faker->randomElement([5, 10, 15, 30])],
+                        default => ['status' => 'present'],
+                    }])->all();
+
+                    app(TakeAttendance::class)->handle($schoolClass, $day, $slot, $entries, $supervisor);
+                }
+            }
+        }
+
+        $absence = AttendanceRecord::query()->where('status', AttendanceStatus::Absent)->with(['session', 'enrollment'])->first();
+
+        if ($absence !== null) {
+            app(JustifyAbsences::class)->handle($absence->enrollment, $absence->session->held_on, $absence->session->held_on, JustificationReason::Illness, 'Certificat médical du CHU de Brazzaville', $supervisor);
+        }
+
+        $enrollment = Enrollment::query()->orderByDesc('id')->firstOrFail();
+        app(RecordIncident::class)->handle([
+            'enrollment_id' => $enrollment->id,
+            'occurred_on' => $days->first() ?? SchoolClock::today(),
+            'description' => 'Usage du téléphone portable en classe malgré un premier rappel.',
+            'sanction' => Sanction::Warning,
+            'parents_informed' => true,
+        ], $supervisor);
     }
 }

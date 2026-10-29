@@ -59,6 +59,10 @@ return [
         'term.manage',
         'term.reopen',
         'report_card.view',
+        // Vie scolaire (étape 5).
+        'attendance.take',
+        'attendance.manage',
+        'discipline.manage',
     ],
 
     /*
@@ -76,6 +80,7 @@ return [
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
             'finance.view', 'finance.manage', 'payment.reverse',
             'assessment.enter', 'assessment.manage', 'term.manage', 'term.reopen', 'report_card.view',
+            'attendance.take', 'attendance.manage', 'discipline.manage',
         ],
         'academic_director' => [
             'membership.view',
@@ -83,6 +88,7 @@ return [
             'staff.view',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
             'assessment.enter', 'assessment.manage', 'term.manage', 'report_card.view',
+            'attendance.take', 'attendance.manage', 'discipline.manage',
         ],
         'secretary' => [
             'membership.view', 'structure.view', 'staff.view',
@@ -94,9 +100,11 @@ return [
             'finance.view', 'finance.manage', 'payment.record', 'payment.reverse',
         ],
         'cashier' => ['structure.view', 'student.view', 'finance.view', 'payment.record'],
-        // Saisie limitée à ses propres matières (voir AssessmentPolicy).
-        'teacher' => ['structure.view', 'assessment.enter'],
-        'supervisor' => ['structure.view'],
+        // Notes : ses propres matières (AssessmentPolicy) ; appel : ses
+        // classes, le jour même (AttendancePolicy).
+        'teacher' => ['structure.view', 'assessment.enter', 'attendance.take'],
+        // Surveillant général : appel, absences, justificatifs, discipline.
+        'supervisor' => ['structure.view', 'student.view', 'attendance.take', 'attendance.manage', 'discipline.manage'],
         'parent' => [],
     ],
 
@@ -232,6 +240,13 @@ return [
                     ['name' => 'Encouragements', 'min' => 14],
                     ['name' => 'Tableau d\'honneur', 'min' => 12],
                 ],
+            ],
+            // Créneaux d'appel (vie scolaire) : un appel par demi-journée,
+            // horaires modifiables par l'école (double vacation, heures de
+            // cours…). Les absences sont comptées en heures.
+            'attendance_slots' => [
+                ['name' => 'Matin', 'starts_at' => '07:30', 'ends_at' => '12:30'],
+                ['name' => 'Après-midi', 'starts_at' => '14:30', 'ends_at' => '17:30'],
             ],
             // Matières proposées, par cycle concerné.
             'subjects' => [

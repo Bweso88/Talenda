@@ -9,6 +9,7 @@ use App\Filament\School\Resources\SchoolClasses\RelationManagers\ClassSubjectsRe
 use App\Filament\School\Resources\SchoolClasses\Schemas\SchoolClassForm;
 use App\Filament\School\Resources\SchoolClasses\Tables\SchoolClassesTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\SchoolClass;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class SchoolClassResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = SchoolClass::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;

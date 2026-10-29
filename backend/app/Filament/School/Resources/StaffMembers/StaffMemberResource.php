@@ -8,6 +8,7 @@ use App\Filament\School\Resources\StaffMembers\Pages\ListStaffMembers;
 use App\Filament\School\Resources\StaffMembers\Schemas\StaffMemberForm;
 use App\Filament\School\Resources\StaffMembers\Tables\StaffMembersTable;
 use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\FrenchLabels;
 use App\Modules\Academic\Models\StaffMember;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,6 +19,8 @@ use UnitEnum;
 
 class StaffMemberResource extends Resource
 {
+    use FrenchLabels;
+
     protected static ?string $model = StaffMember::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
