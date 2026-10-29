@@ -3,6 +3,7 @@
 use App\Filament\Platform\Resources\Tenants\Pages\CreateTenant;
 use App\Filament\Platform\Resources\Tenants\Pages\ListTenants;
 use App\Models\User;
+use App\Modules\Academic\Models\Level;
 use App\Modules\Core\Models\AuditLog;
 use App\Modules\Core\Models\PlatformAdmin;
 use App\Modules\Core\Models\Tenant;
@@ -47,6 +48,7 @@ it('crée une école et son administrateur depuis le back-office', function () {
             'name' => 'Lycée Chaminade',
             'slug' => 'lycee-chaminade',
             'country_code' => 'CG',
+            'cycles' => ['COLLEGE', 'LYCEE'],
             'admin_name' => 'M. Mabiala',
             'admin_phone' => '05 444 44 44',
             'admin_password' => 'provisoire-123',
@@ -60,7 +62,9 @@ it('crée une école et son administrateur depuis le back-office', function () {
     expect($tenant->currency)->toBe('XAF')
         ->and($admin->must_change_password)->toBeTrue()
         ->and(app(TenantContext::class)->run($tenant, fn () => $admin->hasRole('school_admin')))->toBeTrue()
-        ->and(AuditLog::where('action', 'tenant.provisioned')->value('actor_id'))->toBe($this->platformAdmin->id);
+        ->and(AuditLog::where('action', 'tenant.provisioned')->value('actor_id'))->toBe($this->platformAdmin->id)
+        ->and(app(TenantContext::class)->run($tenant, fn () => Level::query()->orderBy('position')->pluck('code')->all()))
+        ->toBe(['6E', '5E', '4E', '3E', '2ND', '1RE', 'TLE']);
 });
 
 it('valide le téléphone de l\'administrateur', function () {

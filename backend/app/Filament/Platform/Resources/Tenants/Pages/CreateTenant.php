@@ -23,6 +23,7 @@ class CreateTenant extends CreateRecord
                 'name' => $data['name'],
                 'slug' => $data['slug'],
                 'country_code' => $data['country_code'],
+                'cycles' => array_values($data['cycles'] ?? []),
             ],
             admin: [
                 'name' => $data['admin_name'],

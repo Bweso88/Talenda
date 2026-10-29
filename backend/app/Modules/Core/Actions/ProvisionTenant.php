@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Core\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Actions\ApplyAcademicPreset;
+use App\Modules\Academic\Actions\ChangeSchoolYearStatus;
+use App\Modules\Academic\Actions\CreateSchoolYear;
 use App\Modules\Core\Enums\MembershipStatus;
 use App\Modules\Core\Enums\TenantStatus;
 use App\Modules\Core\Models\Membership;
@@ -17,9 +20,10 @@ use InvalidArgumentException;
 
 /**
  * Crée une école prête à l'emploi (docs/PRODUCT_ARCHITECTURE.md §7) :
- * l'école avec les valeurs de son gabarit de pays, son premier
- * administrateur (compte existant réutilisé s'il a déjà le même e-mail ou
- * téléphone), et l'entrée d'audit correspondante.
+ * l'école avec les valeurs de son gabarit de pays, sa structure scolaire
+ * (cycles choisis, niveaux, séries, matières), l'année scolaire en cours
+ * ouverte, son premier administrateur (compte existant réutilisé s'il a
+ * déjà le même e-mail ou téléphone), et l'entrée d'audit correspondante.
  *
  * Ajouter une école ne demande ni code ni déploiement : uniquement cette
  * action, appelée depuis le back-office plateforme ou un seeder.
@@ -29,10 +33,13 @@ final class ProvisionTenant
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly RecordAudit $recordAudit,
+        private readonly ApplyAcademicPreset $applyAcademicPreset,
+        private readonly CreateSchoolYear $createSchoolYear,
+        private readonly ChangeSchoolYearStatus $changeSchoolYearStatus,
     ) {}
 
     /**
-     * @param  array{name: string, slug: string, country_code?: string|null}  $school
+     * @param  array{name: string, slug: string, country_code?: string|null, cycles?: list<string>}  $school
      * @param  array{name: string, email?: string|null, phone?: string|null, password: string}  $admin
      */
     public function handle(array $school, array $admin, ?Model $actor = null): Tenant
@@ -63,8 +70,16 @@ final class ProvisionTenant
                 'status' => MembershipStatus::Active,
             ]);
 
-            $this->tenantContext->run($tenant, function () use ($user): void {
+            $this->applyAcademicPreset->handle($tenant, $school['cycles'] ?? []);
+
+            $this->tenantContext->run($tenant, function () use ($user, $tenant): void {
                 $user->assignRole('school_admin');
+
+                $tenant->settings()->create();
+
+                $this->changeSchoolYearStatus->open(
+                    $this->createSchoolYear->handle($this->currentSchoolYearStart($tenant)),
+                );
             });
 
             $this->recordAudit->handle(
@@ -77,6 +92,18 @@ final class ProvisionTenant
 
             return $tenant;
         });
+    }
+
+    /**
+     * Année civile de la rentrée en cours, selon le calendrier du pays :
+     * au Congo (rentrée en octobre), le 15 mars 2027 est dans 2026-2027.
+     */
+    private function currentSchoolYearStart(Tenant $tenant): int
+    {
+        $startMonth = (int) config("talenda.academic_presets.{$tenant->country_code}.school_year.start_month", 9);
+        $today = now($tenant->timezone);
+
+        return $today->month >= $startMonth ? $today->year : $today->year - 1;
     }
 
     /**

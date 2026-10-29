@@ -2,10 +2,12 @@
 
 namespace App\Filament\Platform\Resources\Tenants\Schemas;
 
+use App\Modules\Academic\Actions\ApplyAcademicPreset;
 use App\Modules\Core\Enums\TenantStatus;
 use App\Modules\Core\Support\CountryPresets;
 use App\Modules\Core\Support\PhoneNumber;
 use Closure;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -45,8 +47,16 @@ class TenantForm
                             ->label('Pays')
                             ->options(CountryPresets::options())
                             ->default(CountryPresets::defaultCode())
+                            ->live()
                             ->required()
                             ->disabledOn('edit'),
+                        CheckboxList::make('cycles')
+                            ->label('Cycles proposés par l\'école')
+                            ->helperText('Crée les niveaux, séries et matières du pays pour ces cycles. L\'école pourra les ajuster.')
+                            ->options(fn (Get $get): array => ApplyAcademicPreset::availableCycles((string) $get('country_code')))
+                            ->columns(2)
+                            ->required()
+                            ->visibleOn('create'),
                         Select::make('status')
                             ->label('Statut')
                             ->options(TenantStatus::class)

@@ -5,6 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\Core\Models;
 
 use App\Models\User;
+use App\Modules\Academic\Models\Cycle;
+use App\Modules\Academic\Models\Level;
+use App\Modules\Academic\Models\SchoolClass;
+use App\Modules\Academic\Models\SchoolYear;
+use App\Modules\Academic\Models\StaffMember;
+use App\Modules\Academic\Models\Stream;
+use App\Modules\Academic\Models\Subject;
 use App\Modules\Core\Concerns\HasPublicUuid;
 use App\Modules\Core\Enums\TenantStatus;
 use Database\Factories\TenantFactory;
@@ -15,6 +22,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -77,6 +85,76 @@ class Tenant extends Model implements HasName
     public function modules(): HasMany
     {
         return $this->hasMany(TenantModule::class);
+    }
+
+    /**
+     * @return HasOne<TenantSetting, $this>
+     */
+    public function settings(): HasOne
+    {
+        return $this->hasOne(TenantSetting::class);
+    }
+
+    /*
+     * Relations vers les modèles d'école, utilisées par Filament pour
+     * rattacher les enregistrements à l'école active. Elles restent filtrées
+     * par TenantScope.
+     */
+
+    /**
+     * @return HasMany<SchoolYear, $this>
+     */
+    public function schoolYears(): HasMany
+    {
+        return $this->hasMany(SchoolYear::class);
+    }
+
+    /**
+     * @return HasMany<Cycle, $this>
+     */
+    public function cycles(): HasMany
+    {
+        return $this->hasMany(Cycle::class);
+    }
+
+    /**
+     * @return HasMany<Level, $this>
+     */
+    public function levels(): HasMany
+    {
+        return $this->hasMany(Level::class);
+    }
+
+    /**
+     * @return HasMany<Stream, $this>
+     */
+    public function streams(): HasMany
+    {
+        return $this->hasMany(Stream::class);
+    }
+
+    /**
+     * @return HasMany<Subject, $this>
+     */
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(Subject::class);
+    }
+
+    /**
+     * @return HasMany<StaffMember, $this>
+     */
+    public function staffMembers(): HasMany
+    {
+        return $this->hasMany(StaffMember::class);
+    }
+
+    /**
+     * @return HasMany<SchoolClass, $this>
+     */
+    public function schoolClasses(): HasMany
+    {
+        return $this->hasMany(SchoolClass::class);
     }
 
     public function hasModule(string $module): bool

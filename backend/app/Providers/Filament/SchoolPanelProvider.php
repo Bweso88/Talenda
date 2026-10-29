@@ -3,6 +3,9 @@
 namespace App\Providers\Filament;
 
 use App\Filament\School\Auth\Login;
+use App\Filament\School\Pages\EditSchoolProfile;
+use App\Filament\School\Support\NavigationGroups;
+use App\Filament\Support\InitialsAvatarProvider;
 use App\Modules\Core\Http\Middleware\SyncFilamentTenant;
 use App\Modules\Core\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
@@ -32,9 +35,16 @@ class SchoolPanelProvider extends PanelProvider
             ->brandName('Talenda')
             ->login(Login::class)
             ->tenant(Tenant::class, slugAttribute: 'slug')
+            ->tenantProfile(EditSchoolProfile::class)
+            ->navigationGroups([
+                NavigationGroups::SCHOOL_YEAR,
+                NavigationGroups::STAFF,
+                NavigationGroups::SETTINGS,
+            ])
             ->tenantMiddleware([
                 SyncFilamentTenant::class,
             ], isPersistent: true)
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->colors([
                 'primary' => Color::Indigo,
             ])

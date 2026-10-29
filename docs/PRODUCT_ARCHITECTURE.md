@@ -358,11 +358,11 @@ l'argent ni pour les notes (`numeric(5,2)` pour les notes).
 - `classes` : année, niveau, série, nom (« 6e B »), capacité, salle,
   professeur principal.
 - `subjects` (matières de l'école), `class_subjects` (matière × classe ×
-  coefficient, éventuellement regroupée dans un `subject_group` :
-  « Matières littéraires »…).
+  coefficient × enseignant ; regroupement en `subject_group` reporté
+  jusqu'au besoin réel des bulletins).
 - `staff_members` : personnel (lié à une `membership` s'il a un compte),
   fonction, matricule.
-- `teaching_assignments` : enseignant × classe × matière × année.
+- ~~`teaching_assignments`~~ : remplacée par `class_subjects.teacher_id` (un enseignant par matière et par classe, l'année étant portée par la classe) — voir le journal des décisions.
 
 ### 8.3 Inscriptions & dossiers élèves
 - `students` : identité **permanente** (matricule unique par tenant, nom,
@@ -700,4 +700,9 @@ l'étape N.
 | 2026-10-29 | Scolia reste un produit séparé, non modifié ; jonction future sur la communication parents ; développement uniquement sur Talenda | Préserver Scolia ; concevoir Talenda (UUID publics, événements métier, API documentée, communication minimale) pour faciliter la jonction |
 | 2026-10-29 | Développement hébergé sur **Laravel Cloud** (comme Yosefa / ged-pme), file d'attente `database` ; choix de la production reporté | Pas de coût pendant le développement ; Laravel Cloud gère PostgreSQL. Comparaison Laravel Cloud / Forge à faire avant la mise en production |
 | 2026-10-29 | Isolation des écoles **fermée par défaut** : sans école active, un modèle d'école ne renvoie aucune ligne et ne peut pas être créé | Corrige le comportement de Scolia, où l'absence d'école active désactivait le filtre |
+| 2026-10-30 | Structure scolaire dans un module `Academic` (années, périodes, cycles, niveaux, séries, classes, matières, personnel) | Isoler le socle technique (`Core` : écoles, comptes, isolation) de la structure pédagogique |
+| 2026-10-30 | `class_subjects` porte le coefficient **et** l'enseignant ; pas de table `teaching_assignments` | Un enseignant par matière et par classe couvre le cas réel ; une table de moins à maintenir et à isoler. À revoir si le co-enseignement apparaît |
+| 2026-10-30 | Clés étrangères composites `(tenant_id, …)` partout, avec `ON DELETE SET NULL (colonne)` | La base refuse tout lien entre deux écoles ; la liste de colonnes du SET NULL (PostgreSQL 15+) évite de vider `tenant_id` |
+| 2026-10-30 | La création d'une école applique le gabarit du pays pour les cycles choisis et ouvre l'année scolaire en cours | Une école est utilisable dès sa création, sans saisie de structure |
+| 2026-10-30 | Avatars générés localement (initiales) dans les back-offices | Pas d'appel à un service tiers, rien à télécharger sur une connexion lente |
 | 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |
