@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Communication\Http\Controllers\DeviceTokensController;
+use App\Modules\Communication\Http\Controllers\NotificationsController;
 use App\Modules\Core\Http\Controllers\Api\V1\AuthController;
 use App\Modules\Core\Http\Controllers\Api\V1\CurrentTenantController;
 use App\Modules\Core\Http\Controllers\Api\V1\MeController;
@@ -22,10 +24,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::post('auth/password', [AuthController::class, 'changePassword'])->name('auth.password');
+        Route::post('device-tokens', [DeviceTokensController::class, 'store'])->name('device-tokens.store');
+        Route::delete('device-tokens', [DeviceTokensController::class, 'destroy'])->name('device-tokens.destroy');
         Route::get('me', MeController::class)->name('me');
 
         Route::middleware(ResolveApiTenant::class)->group(function (): void {
             Route::get('tenant', CurrentTenantController::class)->name('tenant');
+
+            Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+            Route::post('notifications/read-all', [NotificationsController::class, 'readAll'])->name('notifications.read-all');
+            Route::post('notifications/{notification}/read', [NotificationsController::class, 'read'])->name('notifications.read');
 
             // Portail parents : uniquement les enfants dont le compte est
             // responsable (introuvable sinon).

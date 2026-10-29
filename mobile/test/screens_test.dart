@@ -12,6 +12,8 @@ import 'package:talenda_parents/features/auth/models.dart';
 import 'package:talenda_parents/features/children/home_screen.dart';
 import 'package:talenda_parents/features/children/models.dart';
 import 'package:talenda_parents/features/children/parent_repository.dart';
+import 'package:talenda_parents/features/notifications/notifications.dart';
+import 'package:talenda_parents/features/notifications/notifications_screen.dart';
 import 'package:talenda_parents/features/results/result_detail_screen.dart';
 
 import 'helpers.dart';
@@ -40,6 +42,14 @@ Widget _app(Widget child, List overrides) => ProviderScope(
   child: MaterialApp(theme: talendaTheme(), home: child),
 );
 
+NotificationList _notifications() {
+  final json = fixture('notifications');
+  return NotificationList(
+    items: [for (final item in json['data'] as List) AppNotification.fromJson(item as Map<String, dynamic>)],
+    unreadCount: json['unread_count'] as int,
+  );
+}
+
 void main() {
   setUpAll(() => initializeDateFormatting('fr_FR'));
 
@@ -62,7 +72,11 @@ void main() {
     final children = [for (final item in fixture('children')['data'] as List) Child.fromJson(item as Map<String, dynamic>)];
 
     await tester.pumpWidget(
-      _app(const HomeScreen(), [authControllerProvider.overrideWith(_SignedIn.new), childrenProvider.overrideWith((ref) async => Cached(children))]),
+      _app(const HomeScreen(), [
+        authControllerProvider.overrideWith(_SignedIn.new),
+        childrenProvider.overrideWith((ref) async => Cached(children)),
+        notificationsProvider.overrideWith((ref) async => Cached(_notifications())),
+      ]),
     );
     await tester.pumpAndSettle();
 
@@ -71,6 +85,18 @@ void main() {
     expect(find.text('MABIALA Arsène'), findsOneWidget);
     expect(find.textContaining('Moy. 11,68'), findsOneWidget);
     expect(find.textContaining('2 retards'), findsOneWidget);
+    // Cloche : 3 notifications non lues.
+    expect(find.text('3'), findsOneWidget);
+  });
+
+  testWidgets('notifications : absences, paiements et annonces de l\'école', (tester) async {
+    await tester.pumpWidget(_app(const NotificationsScreen(), [notificationsProvider.overrideWith((ref) async => Cached(_notifications()))]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Grâce absente'), findsOneWidget);
+    expect(find.text('Paiement reçu'), findsOneWidget);
+    expect(find.text('Réunion des parents du premier trimestre'), findsOneWidget);
+    expect(find.text('Tout marquer lu'), findsOneWidget);
   });
 
   testWidgets('affiche le bandeau hors ligne avec la date des données', (tester) async {
@@ -80,6 +106,7 @@ void main() {
       _app(const HomeScreen(), [
         authControllerProvider.overrideWith(_SignedIn.new),
         childrenProvider.overrideWith((ref) async => Cached(children, cachedAt: DateTime(2026, 11, 16, 9, 30))),
+        notificationsProvider.overrideWith((ref) async => Cached(_notifications())),
       ]),
     );
     await tester.pumpAndSettle();

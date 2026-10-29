@@ -2,6 +2,7 @@
 
 namespace App\Filament\School\Resources\Students\RelationManagers;
 
+use App\Modules\Communication\Actions\SendParentCredentials;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
 use App\Modules\Core\Support\PhoneNumber;
 use App\Modules\Enrollments\Actions\LinkGuardian;
@@ -138,14 +139,29 @@ class GuardianLinksRelationManager extends RelationManager
                     ->label('Ouvrir l\'app')
                     ->icon(Heroicon::OutlinedDevicePhoneMobile)
                     ->visible(fn (StudentGuardian $record): bool => $record->guardian->user_id === null)
-                    ->requiresConfirmation()
                     ->modalHeading(fn (StudentGuardian $record): string => "Ouvrir l'app parents à {$record->guardian->full_name}")
                     ->modalDescription('Le responsable se connectera avec son téléphone. Il verra la scolarité, les bulletins publiés et les absences de ses enfants dans cette école.')
-                    ->action(function (StudentGuardian $record): void {
+                    ->modalSubmitActionLabel('Ouvrir l\'accès')
+                    ->schema([
+                        Toggle::make('send_sms')->label('Envoyer l\'identifiant et le mot de passe par SMS')->default(true),
+                    ])
+                    ->action(function (StudentGuardian $record, array $data): void {
                         try {
                             $temporaryPassword = app(GrantParentAccess::class)->handle($record->guardian, Filament::auth()->user());
                         } catch (BusinessRuleViolation $exception) {
                             Notification::make()->danger()->title($exception->getMessage())->send();
+
+                            return;
+                        }
+
+                        if ($data['send_sms'] ?? false) {
+                            app(SendParentCredentials::class)->handle($record->guardian, $temporaryPassword, Filament::auth()->user());
+
+                            Notification::make()
+                                ->success()
+                                ->title("App parents ouverte pour {$record->guardian->full_name}")
+                                ->body('L\'identifiant et le mot de passe provisoire lui ont été envoyés par SMS.')
+                                ->send();
 
                             return;
                         }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Assessments\AssessmentsServiceProvider;
+use App\Modules\Communication\CommunicationServiceProvider;
 use App\Modules\Finances\FinancesServiceProvider;
 use App\Modules\SchoolLife\SchoolLifeServiceProvider;
 use App\Providers\AppServiceProvider;
@@ -12,6 +13,7 @@ return [
     FinancesServiceProvider::class,
     AssessmentsServiceProvider::class,
     SchoolLifeServiceProvider::class,
+    CommunicationServiceProvider::class,
     PlatformPanelProvider::class,
     SchoolPanelProvider::class,
 ];

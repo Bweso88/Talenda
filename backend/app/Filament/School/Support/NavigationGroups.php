@@ -15,6 +15,8 @@ final class NavigationGroups
 
     public const SCHOOL_LIFE = 'Vie scolaire';
 
+    public const COMMUNICATION = 'Communication';
+
     public const FINANCES = 'Finances';
 
     public const FINANCE_SETTINGS = 'Paramètres financiers';

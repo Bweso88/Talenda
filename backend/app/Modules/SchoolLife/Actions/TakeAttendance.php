@@ -12,6 +12,7 @@ use App\Modules\Academic\Models\Term;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
 use App\Modules\Core\Support\SchoolClock;
 use App\Modules\SchoolLife\Enums\AttendanceStatus;
+use App\Modules\SchoolLife\Events\AbsencesRecorded;
 use App\Modules\SchoolLife\Models\AttendanceRecord;
 use App\Modules\SchoolLife\Models\AttendanceSession;
 use App\Modules\SchoolLife\Models\AttendanceSlot;
@@ -61,6 +62,9 @@ final class TakeAttendance
             $session->save();
             $session->touch();
 
+            $alreadyAbsent = $session->records()->where('status', AttendanceStatus::Absent)->pluck('enrollment_id')->all();
+            $newlyAbsent = [];
+
             foreach ($entries as $enrollmentId => $entry) {
                 $status = self::status($entry['status'] ?? null);
                 $lateMinutes = (int) ($entry['late_minutes'] ?? 0);
@@ -83,6 +87,14 @@ final class TakeAttendance
                     'late_minutes' => $status === AttendanceStatus::Late && $lateMinutes > 0 ? $lateMinutes : null,
                     'note' => blank($entry['note'] ?? null) ? null : trim((string) $entry['note']),
                 ]);
+
+                if ($status === AttendanceStatus::Absent && ! in_array((int) $enrollmentId, $alreadyAbsent, true)) {
+                    $newlyAbsent[] = (int) $enrollmentId;
+                }
+            }
+
+            if ($newlyAbsent !== []) {
+                AbsencesRecorded::dispatch($session, $newlyAbsent);
             }
 
             return $session;

@@ -63,6 +63,9 @@ return [
         'attendance.take',
         'attendance.manage',
         'discipline.manage',
+        // Communication (étape 7).
+        'communication.send',
+        'communication.manage',
     ],
 
     /*
@@ -81,6 +84,7 @@ return [
             'finance.view', 'finance.manage', 'payment.reverse',
             'assessment.enter', 'assessment.manage', 'term.manage', 'term.reopen', 'report_card.view',
             'attendance.take', 'attendance.manage', 'discipline.manage',
+            'communication.send', 'communication.manage',
         ],
         'academic_director' => [
             'membership.view',
@@ -89,11 +93,12 @@ return [
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
             'assessment.enter', 'assessment.manage', 'term.manage', 'report_card.view',
             'attendance.take', 'attendance.manage', 'discipline.manage',
+            'communication.send',
         ],
         'secretary' => [
             'membership.view', 'structure.view', 'staff.view',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
-            'report_card.view',
+            'report_card.view', 'communication.send',
         ],
         'accountant' => [
             'structure.view', 'student.view',
@@ -112,6 +117,21 @@ return [
      * Gabarits de pays (§1) : valeurs par défaut appliquées à la création
      * d'une école, modifiables ensuite par l'école.
      */
+    /*
+     * Fournisseurs d'envoi. « log » = développement : rien n'est envoyé,
+     * les messages sont écrits dans le journal (et le journal SMS du
+     * back-office). Le fournisseur SMS réel se branchera par SMS_DRIVER.
+     */
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        // Nom d'expéditeur par défaut (11 caractères max), modifiable par école.
+        'default_sender' => env('SMS_SENDER', 'TALENDA'),
+    ],
+
+    'push' => [
+        'driver' => env('PUSH_DRIVER', 'log'),
+    ],
+
     'default_country' => 'CG',
 
     'countries' => [

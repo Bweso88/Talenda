@@ -6,6 +6,8 @@ import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
 import '../auth/auth_controller.dart';
+import '../notifications/notifications.dart';
+import '../notifications/notifications_screen.dart';
 import 'models.dart';
 import 'parent_repository.dart';
 
@@ -24,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
         titleSpacing: 16,
         title: Image.asset('assets/images/talenda-logo-horizontal.png', height: 26, semanticLabel: 'Talenda'),
         actions: [
+          const NotificationBell(),
           PopupMenuButton<String>(
             tooltip: 'Menu',
             icon: const Icon(Icons.account_circle_outlined, color: TalendaColors.navy),
@@ -41,7 +44,10 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(childrenProvider.future),
+        onRefresh: () {
+          ref.invalidate(notificationsProvider);
+          return ref.refresh(childrenProvider.future);
+        },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [

@@ -11,6 +11,7 @@ use App\Modules\Enrollments\Models\Enrollment;
 use App\Modules\SchoolLife\Enums\AttendanceStatus;
 use App\Modules\SchoolLife\Enums\JustificationReason;
 use App\Modules\SchoolLife\Enums\JustificationStatus;
+use App\Modules\SchoolLife\Events\JustificationReviewed;
 use App\Modules\SchoolLife\Models\AbsenceJustification;
 use App\Modules\SchoolLife\Models\AttendanceRecord;
 use Illuminate\Support\Carbon;
@@ -54,6 +55,8 @@ final class JustifyAbsences
         $this->recordAudit->handle($accept ? 'absence.justification_accepted' : 'absence.justification_rejected', actor: $reviewer, subject: $justification, metadata: [
             'absences_covered' => $accept ? self::coveredAbsences($justification) : 0,
         ]);
+
+        JustificationReviewed::dispatch($justification);
     }
 
     private function create(Enrollment $enrollment, Carbon $startsOn, Carbon $endsOn, JustificationReason $reason, ?string $comment, User $user, JustificationStatus $status): AbsenceJustification

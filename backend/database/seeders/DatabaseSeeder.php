@@ -16,6 +16,9 @@ use App\Modules\Academic\Models\Term;
 use App\Modules\Assessments\Actions\SaveScores;
 use App\Modules\Assessments\Models\Assessment;
 use App\Modules\Assessments\Models\AssessmentType;
+use App\Modules\Communication\Actions\PublishAnnouncement;
+use App\Modules\Communication\Enums\AnnouncementAudience;
+use App\Modules\Communication\Models\Announcement;
 use App\Modules\Core\Actions\ProvisionTenant;
 use App\Modules\Core\Actions\SyncRolesAndPermissions;
 use App\Modules\Core\Models\PlatformAdmin;
@@ -101,6 +104,7 @@ class DatabaseSeeder extends Seeder
             $this->seedDemoGrades();
             $this->seedDemoSchoolLife();
             $this->seedDemoParentAccess();
+            $this->seedDemoAnnouncement();
         });
 
         app(TenantContext::class)->run($brazzaville, fn () => $brazzaville->settings()->update([
@@ -382,5 +386,24 @@ class DatabaseSeeder extends Seeder
         if ($absence !== null) {
             app(JustifyAbsences::class)->submitByGuardian($absence->enrollment, $absence->session->held_on, $absence->session->held_on, JustificationReason::Family, 'Décès d\'un proche, il était aux obsèques au village.', $parent);
         }
+    }
+
+    /**
+     * Une annonce à toute l'école, visible dans l'app parents.
+     */
+    private function seedDemoAnnouncement(): void
+    {
+        if (Announcement::query()->exists()) {
+            return;
+        }
+
+        app(PublishAnnouncement::class)->handle(
+            'Réunion des parents du premier trimestre',
+            'Les parents sont invités à la réunion du samedi 21 novembre à 9 h, au préau de l\'école. Ordre du jour : résultats du trimestre et préparation des examens.',
+            AnnouncementAudience::School,
+            null,
+            false,
+            User::query()->where('phone', '+242061111111')->firstOrFail(),
+        );
     }
 }

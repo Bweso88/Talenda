@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $address
  * @property int|null $user_id compte de l'app parents, relié par l'école
  * @property User|null $user
+ * @property-read StudentGuardian|null $pivot lien avec l'élève, quand chargé depuis Student::guardians
  * @property-read string $full_name
  */
 #[UseFactory(GuardianFactory::class)]

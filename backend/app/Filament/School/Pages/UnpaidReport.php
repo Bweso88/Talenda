@@ -4,15 +4,19 @@ namespace App\Filament\School\Pages;
 
 use App\Filament\School\Resources\Invoices\InvoiceResource;
 use App\Filament\School\Support\NavigationGroups;
+use App\Models\User;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\SchoolYear;
+use App\Modules\Communication\Actions\SendPaymentReminders;
 use App\Modules\Core\Support\PhoneNumber;
 use App\Modules\Finances\Support\Money;
 use App\Modules\Finances\Support\UnpaidReport as UnpaidReportBuilder;
 use App\Modules\Finances\Support\UnpaidRow;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Schema;
@@ -80,6 +84,15 @@ class UnpaidReport extends Page implements HasTable
                 TextColumn::make('overdue')->label('En retard')->alignEnd()->weight('bold')->color('danger')
                     ->formatStateUsing(fn (int $state): string => $money($state)),
             ])
+            ->toolbarActions([
+                BulkAction::make('remind')
+                    ->label('Relancer par SMS')
+                    ->icon(Heroicon::OutlinedChatBubbleLeftRight)
+                    ->visible(fn (): bool => $this->canRemind())
+                    ->requiresConfirmation()
+                    ->modalDescription('Un SMS (et une notification dans l\'app) au responsable qui paie, pour chaque élève sélectionné. Une famille déjà relancée aujourd\'hui ne l\'est pas une seconde fois.')
+                    ->action(fn (Collection $records) => $this->remind($records->pluck('invoice_id')->map(fn ($id): int => (int) $id)->all())),
+            ])
             ->filters([
                 SelectFilter::make('school_class_id')
                     ->label('Classe')
@@ -97,6 +110,15 @@ class UnpaidReport extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('remindAll')
+                ->label('Relancer toutes les familles')
+                ->icon(Heroicon::OutlinedChatBubbleLeftRight)
+                ->color('warning')
+                ->visible(fn (): bool => $this->canRemind())
+                ->requiresConfirmation()
+                ->modalHeading('Relancer toutes les familles en retard ?')
+                ->modalDescription(fn (): string => $this->rows($this->tableFilters['school_class_id']['value'] ?? null)->count().' famille(s) recevront un SMS de rappel (classe filtrée seulement, le cas échéant). Une famille déjà relancée aujourd\'hui ne l\'est pas une seconde fois.')
+                ->action(fn () => $this->remind(null)),
             Action::make('export')
                 ->label('Exporter en Excel')
                 ->icon(Heroicon::OutlinedArrowDownTray)
@@ -116,6 +138,29 @@ class UnpaidReport extends Page implements HasTable
         }
 
         return app(UnpaidReportBuilder::class)->rows($schoolYear, filled($schoolClassId) ? (int) $schoolClassId : null);
+    }
+
+    /**
+     * @param  list<int>|null  $invoiceIds  null = toutes les lignes affichées
+     */
+    private function remind(?array $invoiceIds): void
+    {
+        $rows = $this->rows($this->tableFilters['school_class_id']['value'] ?? null)
+            ->when($invoiceIds !== null, fn (Collection $rows) => $rows->filter(fn (UnpaidRow $row): bool => in_array($row->invoice->id, $invoiceIds, true)));
+
+        /** @var User $user */
+        $user = Filament::auth()->user();
+        $result = app(SendPaymentReminders::class)->handle($rows, $user);
+
+        Notification::make()->success()
+            ->title("{$result['sent']} famille(s) relancée(s) par SMS")
+            ->body($result['skipped'] > 0 ? "{$result['skipped']} non relancée(s) : déjà relancée(s) aujourd'hui ou sans téléphone." : null)
+            ->send();
+    }
+
+    private function canRemind(): bool
+    {
+        return Filament::auth()->user()?->can('finance.manage') ?? false;
     }
 
     private function export(): BinaryFileResponse

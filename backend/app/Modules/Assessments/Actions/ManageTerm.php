@@ -9,6 +9,7 @@ use App\Modules\Academic\Enums\TermStatus;
 use App\Modules\Academic\Models\ClassSubject;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\Term;
+use App\Modules\Assessments\Events\TermPublished;
 use App\Modules\Assessments\Models\GradingSetting;
 use App\Modules\Assessments\Models\TermComment;
 use App\Modules\Assessments\Models\TermResult;
@@ -75,6 +76,7 @@ final class ManageTerm
             $this->computeAnnualResults->handle($term->schoolYear);
 
             $this->recordAudit->handle('term.published', actor: $user, subject: $term, metadata: ['report_cards' => $count]);
+            TermPublished::dispatch($term);
 
             return $count;
         });

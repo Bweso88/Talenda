@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:talenda_parents/features/auth/models.dart';
 import 'package:talenda_parents/features/children/models.dart';
+import 'package:talenda_parents/features/notifications/notifications.dart';
 
 import 'helpers.dart';
 
@@ -42,5 +43,16 @@ void main() {
     expect(detail.councilComment, contains('physique-chimie'));
     expect(life.records.where((record) => record.isAbsence), isNotEmpty);
     expect(life.justifications.first.status, 'pending');
+  });
+
+  test('lit les notifications et l\'onglet à ouvrir', () {
+    final json = fixture('notifications');
+    final items = [for (final item in json['data'] as List) AppNotification.fromJson(item as Map<String, dynamic>)];
+
+    expect(json['unread_count'], 3);
+    expect(items.first.type, 'absence');
+    expect(items.first.tab, 2);
+    expect(items[1].tab, 0);
+    expect(items.last.child, isNull);
   });
 }

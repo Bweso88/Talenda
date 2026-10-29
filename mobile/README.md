@@ -1,7 +1,12 @@
 # Talenda — app des parents (Flutter)
 
 L'app des parents : scolarité (reste à payer, échéancier, reçus), bulletins
-publiés et absences de leurs enfants, dépôt d'un justificatif d'absence.
+publiés et absences de leurs enfants, dépôt d'un justificatif d'absence,
+notifications de l'école (absence, paiement, bulletin, annonces).
+
+Notifications push : le backend est prêt (`POST /v1/device-tokens`) ; il
+reste à créer le projet Firebase de Talenda et à ajouter `firebase_messaging`
+à l'app. En attendant, les notifications s'affichent dans l'app (cloche).
 Architecture : [`../docs/PRODUCT_ARCHITECTURE.md`](../docs/PRODUCT_ARCHITECTURE.md) §10.
 
 Elle utilise l'API v1 du backend. Son contrat est `../docs/openapi.json`

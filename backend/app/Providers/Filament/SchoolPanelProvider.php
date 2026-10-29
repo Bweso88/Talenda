@@ -48,6 +48,7 @@ class SchoolPanelProvider extends PanelProvider
                 NavigationGroups::STUDENTS,
                 NavigationGroups::GRADES,
                 NavigationGroups::SCHOOL_LIFE,
+                NavigationGroups::COMMUNICATION,
                 NavigationGroups::FINANCES,
                 NavigationGroups::SCHOOL_YEAR,
                 NavigationGroups::STAFF,

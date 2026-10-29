@@ -10,6 +10,7 @@ import 'features/auth/login_screen.dart';
 import 'features/auth/school_picker_screen.dart';
 import 'features/children/child_screen.dart';
 import 'features/children/home_screen.dart';
+import 'features/notifications/notifications_screen.dart';
 import 'features/pdf/pdf_screen.dart';
 import 'features/results/result_detail_screen.dart';
 
@@ -47,8 +48,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
       GoRoute(
         path: '/enfants/:uuid',
-        builder: (_, state) => ChildScreen(uuid: state.pathParameters['uuid']!),
+        builder: (_, state) => ChildScreen(uuid: state.pathParameters['uuid']!, initialTab: int.tryParse(state.uri.queryParameters['onglet'] ?? '') ?? 0),
       ),
+      GoRoute(path: '/notifications', builder: (_, _) => const NotificationsScreen()),
       GoRoute(
         path: '/enfants/:uuid/bulletins/:result',
         builder: (_, state) => ResultDetailScreen(child: state.pathParameters['uuid']!, result: state.pathParameters['result']!),

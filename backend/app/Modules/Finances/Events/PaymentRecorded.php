@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Finances\Events;
 
 use App\Modules\Finances\Models\Payment;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Encaissement enregistré. Servira à envoyer le reçu au parent
- * (notifications, étape 5).
+ * Encaissement enregistré : la famille est prévenue (module
+ * Communication), une fois l'encaissement validé en base.
  */
-final class PaymentRecorded
+final class PaymentRecorded implements ShouldDispatchAfterCommit
 {
     use Dispatchable;
 

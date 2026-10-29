@@ -35,6 +35,11 @@ Comptes de démonstration (mot de passe : `talenda-demo`) :
 | Enseignant | `06 444 44 02` | Lycée Démo de Brazzaville (ses matières et ses classes seulement) |
 | Surveillant général | `06 444 44 20` | Lycée Démo de Brazzaville (appel, absences, discipline) |
 
+`composer run dev` lance le serveur et la file d'attente (envoi des SMS et
+des notifications de bulletins). Les SMS ne sont pas réellement envoyés en
+développement (`SMS_DRIVER=log`) : ils apparaissent dans le journal SMS du
+back-office et dans `storage/logs/laravel.log`.
+
 Le Lycée Démo de Brazzaville contient une structure complète (collège et
 lycée, 3 classes avec coefficients, 3 enseignants) et 7 élèves inscrits,
 dont une fratrie, avec une grille tarifaire, quelques encaissements,
@@ -70,7 +75,10 @@ Les tests utilisent la base PostgreSQL `talenda_test`.
   - `SchoolLife` : appel (absences, retards), justificatifs, discipline ;
     absences reportées sur le bulletin ;
   - `ParentPortal` : accès des parents (ouvert par l'école) et API v1 de
-    l'app parents (`mobile/`).
+    l'app parents (`mobile/`) ;
+  - `Communication` : notifications dans l'app, SMS (journal, coût),
+    annonces, relances d'impayés, messages automatiques (absence,
+    paiement, bulletin), réglages par école.
 
 Documentation de l'API : `/docs/api` en local, et `docs/openapi.json`
 (contrat de l'app, à régénérer après tout changement de l'API :
@@ -95,6 +103,8 @@ Laravel Cloud, avec sa base PostgreSQL :
 3. Commande de déploiement :
    `php artisan migrate --force && php artisan talenda:sync-permissions`
 4. Pour une base de démonstration, lancer une fois `php artisan db:seed --force`.
+   Activer aussi un « queue worker » (file d'attente `database`) : c'est lui
+   qui envoie les SMS et les notifications de bulletins.
 5. Fichiers : le disque local de Laravel Cloud n'est pas permanent.
    Attacher un stockage objet (bucket) avant de téléverser de vrais logos
    (disque `public`) et photos d'élèves (disque `local`, privé).
