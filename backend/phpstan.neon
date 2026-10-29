@@ -1,0 +1,18 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - app
+        - config
+        - database
+        - routes
+    tmpDir: storage/framework/cache/phpstan
+    ignoreErrors:
+        # BelongsToTenant n'est encore utilisé par aucun modèle de l'application
+        # (seulement par le test d'isolation). À retirer à l'étape 1, avec le
+        # premier modèle d'école (années scolaires, classes…).
+        -
+            identifier: trait.unused
+            path: app/Modules/Core/Tenancy/BelongsToTenant.php
