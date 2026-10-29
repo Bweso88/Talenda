@@ -53,4 +53,16 @@ final class PhoneNumber
 
         return '+'.$dialCode.$digits;
     }
+
+    /**
+     * Affichage lisible d'un numéro E.164 : +242 06 123 45 67.
+     */
+    public static function format(?string $e164): ?string
+    {
+        if ($e164 === null || preg_match('/^\+242(\d{2})(\d{3})(\d{2})(\d{2})$/', $e164, $parts) !== 1) {
+            return $e164;
+        }
+
+        return "+242 {$parts[1]} {$parts[2]} {$parts[3]} {$parts[4]}";
+    }
 }

@@ -14,6 +14,9 @@ use App\Modules\Academic\Models\Stream;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Core\Concerns\HasPublicUuid;
 use App\Modules\Core\Enums\TenantStatus;
+use App\Modules\Enrollments\Models\Enrollment;
+use App\Modules\Enrollments\Models\Guardian;
+use App\Modules\Enrollments\Models\Student;
 use Database\Factories\TenantFactory;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -155,6 +158,30 @@ class Tenant extends Model implements HasName
     public function schoolClasses(): HasMany
     {
         return $this->hasMany(SchoolClass::class);
+    }
+
+    /**
+     * @return HasMany<Student, $this>
+     */
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    /**
+     * @return HasMany<Guardian, $this>
+     */
+    public function guardians(): HasMany
+    {
+        return $this->hasMany(Guardian::class);
+    }
+
+    /**
+     * @return HasMany<Enrollment, $this>
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
     }
 
     public function hasModule(string $module): bool

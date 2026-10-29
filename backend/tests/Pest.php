@@ -4,6 +4,8 @@ use App\Models\User;
 use App\Modules\Core\Actions\ProvisionTenant;
 use App\Modules\Core\Actions\SyncRolesAndPermissions;
 use App\Modules\Core\Models\Tenant;
+use App\Modules\Core\Tenancy\TenantContext;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -31,4 +33,32 @@ function provisionSchool(string $slug = 'lycee-test', array $cycles = ['COLLEGE'
     );
 
     return [$tenant, User::firstWhere('email', $slug.'@example.cg')];
+}
+
+/**
+ * Données minimales d'un nouvel élève pour EnrollNewStudent.
+ *
+ * @return array<string, mixed>
+ */
+function newStudentData(array $overrides = []): array
+{
+    return [
+        'last_name' => 'Mabiala',
+        'first_names' => 'Grâce Divine',
+        'gender' => 'F',
+        'birth_date' => '2014-05-12',
+        'birth_place' => 'Brazzaville',
+        ...$overrides,
+    ];
+}
+
+/**
+ * Se place dans le back-office de l'école, comme le ferait le navigateur.
+ */
+function actInSchool(User $user, Tenant $school): void
+{
+    test()->actingAs($user);
+    Filament::setCurrentPanel('school');
+    Filament::setTenant($school);
+    app(TenantContext::class)->set($school);
 }

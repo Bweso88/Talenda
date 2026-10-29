@@ -16,6 +16,8 @@ use App\Modules\Core\Actions\SyncRolesAndPermissions;
 use App\Modules\Core\Models\PlatformAdmin;
 use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Tenancy\TenantContext;
+use App\Modules\Enrollments\Actions\EnrollNewStudent;
+use App\Modules\Enrollments\Models\Student;
 use Illuminate\Database\Seeder;
 
 /**
@@ -61,7 +63,17 @@ class DatabaseSeeder extends Seeder
                 ]);
         }
 
-        app(TenantContext::class)->run($brazzaville, fn () => $this->seedDemoClasses());
+        app(TenantContext::class)->run($brazzaville, function (): void {
+            $this->seedDemoClasses();
+            $this->seedDemoStudents();
+        });
+
+        app(TenantContext::class)->run($brazzaville, fn () => $brazzaville->settings()->update([
+            'city' => 'Brazzaville',
+            'director_name' => 'M. Directeur Démo',
+            'motto' => 'Discipline - Travail - Réussite',
+            'phone' => '+242061111111',
+        ]));
 
         User::query()
             ->whereIn('phone', ['+242061111111', '+242052222222', '+242063333333'])
@@ -117,6 +129,39 @@ class DatabaseSeeder extends Seeder
                     'teacher_id' => in_array($code, ['MATH', 'PC'], true) ? $teachers[1]->id : null,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Une dizaine d'élèves inscrits, dont une fratrie (même mère).
+     */
+    private function seedDemoStudents(): void
+    {
+        if (Student::query()->exists()) {
+            return;
+        }
+
+        $classes = SchoolClass::query()->pluck('id', 'name');
+        $enroll = app(EnrollNewStudent::class);
+        $mother = ['relationship' => 'mother', 'last_name' => 'Okemba', 'first_names' => 'Prisca', 'phone' => '+242065550001', 'is_financially_responsible' => true];
+
+        $students = [
+            ['Mabiala', 'Grâce Divine', 'F', '2014-05-12', '6e A', $mother],
+            ['Mabiala', 'Arsène', 'M', '2010-01-20', '2nde C', $mother],
+            ['Nkounkou', 'Merveille', 'F', '2014-09-03', '6e A', ['relationship' => 'father', 'last_name' => 'Nkounkou', 'first_names' => 'Jean', 'phone' => '+242055550002']],
+            ['Ibara', 'Christ-Vianney', 'M', '2013-11-28', '6e A', ['relationship' => 'father', 'last_name' => 'Ibara', 'first_names' => 'Paul', 'phone' => '+242065550003']],
+            ['Moukala', 'Dieuveille', 'M', '2010-06-15', '2nde C', ['relationship' => 'mother', 'last_name' => 'Moukala', 'first_names' => 'Sylvie', 'phone' => '+242065550004']],
+            ['Ngoma', 'Exaucée', 'F', '2008-02-07', 'Tle D', ['relationship' => 'guardian', 'last_name' => 'Ngoma', 'first_names' => 'Albert', 'phone' => '+242055550005']],
+            ['Samba', 'Rodrigue', 'M', '2008-08-19', 'Tle D', ['relationship' => 'father', 'last_name' => 'Samba', 'first_names' => 'Michel', 'phone' => '+242065550006']],
+        ];
+
+        foreach ($students as [$lastName, $firstNames, $gender, $birthDate, $className, $guardian]) {
+            $enroll->handle(
+                ['last_name' => $lastName, 'first_names' => $firstNames, 'gender' => $gender, 'birth_date' => $birthDate, 'birth_place' => 'Brazzaville'],
+                [$guardian],
+                SchoolClass::query()->findOrFail($classes[$className]),
+                documents: ['birth_certificate', 'photos'],
+            );
         }
     }
 }

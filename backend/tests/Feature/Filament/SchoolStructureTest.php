@@ -12,7 +12,6 @@ use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Academic\Models\StaffMember;
 use App\Modules\Core\Tenancy\TenantContext;
 use Filament\Actions\Testing\TestAction;
-use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
@@ -26,17 +25,6 @@ beforeEach(function () {
 });
 
 afterEach(fn () => Carbon::setTestNow());
-
-/**
- * Se place dans le back-office de l'école, comme le ferait le navigateur.
- */
-function actInSchool(User $user, $school): void
-{
-    test()->actingAs($user);
-    Filament::setCurrentPanel('school');
-    Filament::setTenant($school);
-    app(TenantContext::class)->set($school);
-}
 
 it('ouvre toutes les pages de structure pour l\'administrateur', function (string $path) {
     $this->actingAs($this->admin)

@@ -33,7 +33,8 @@ Comptes de démonstration (mot de passe : `talenda-demo`) :
 | Parent | `06 333 33 33` | Les deux écoles (un seul compte) |
 
 Le Lycée Démo de Brazzaville contient une structure complète (collège et
-lycée, 3 classes avec coefficients, 3 enseignants).
+lycée, 3 classes avec coefficients, 3 enseignants) et 7 élèves inscrits,
+dont une fratrie.
 
 ## Vérifications
 
@@ -53,7 +54,9 @@ Les tests utilisent la base PostgreSQL `talenda_test`.
   politiques, contrôleurs API, middlewares).
   - `Core` : écoles, comptes, isolation des écoles, audit ;
   - `Academic` : années scolaires, périodes, cycles, niveaux, séries,
-    classes, matières et coefficients, personnel.
+    classes, matières et coefficients, personnel ;
+  - `Enrollments` : élèves, responsables, inscriptions et réinscriptions,
+    import Excel, certificats de scolarité et cartes scolaires (PDF).
 - `app/Filament/School/` et `app/Filament/Platform/` : écrans des deux
   back-offices.
 - `config/talenda.php` : catalogues des modules, rôles, permissions et
@@ -74,9 +77,9 @@ Laravel Cloud, avec sa base PostgreSQL :
 3. Commande de déploiement :
    `php artisan migrate --force && php artisan talenda:sync-permissions`
 4. Pour une base de démonstration, lancer une fois `php artisan db:seed --force`.
-5. Logos des écoles : le disque local de Laravel Cloud n'est pas permanent.
-   Attacher un stockage objet (bucket) et l'utiliser comme disque `public`
-   avant de téléverser de vrais logos.
+5. Fichiers : le disque local de Laravel Cloud n'est pas permanent.
+   Attacher un stockage objet (bucket) avant de téléverser de vrais logos
+   (disque `public`) et photos d'élèves (disque `local`, privé).
 
 Le choix de l'hébergement de production (Laravel Cloud ou VPS avec Forge)
 sera fait au moment de la mise en production.

@@ -37,6 +37,7 @@ class SchoolPanelProvider extends PanelProvider
             ->tenant(Tenant::class, slugAttribute: 'slug')
             ->tenantProfile(EditSchoolProfile::class)
             ->navigationGroups([
+                NavigationGroups::STUDENTS,
                 NavigationGroups::SCHOOL_YEAR,
                 NavigationGroups::STAFF,
                 NavigationGroups::SETTINGS,

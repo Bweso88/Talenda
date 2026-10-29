@@ -7,6 +7,7 @@ namespace App\Modules\Academic\Models;
 use App\Modules\Academic\Policies\SchoolClassPolicy;
 use App\Modules\Core\Concerns\HasPublicUuid;
 use App\Modules\Core\Tenancy\BelongsToTenant;
+use App\Modules\Enrollments\Models\Enrollment;
 use Database\Factories\SchoolClassFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -83,6 +84,27 @@ class SchoolClass extends Model
     public function classSubjects(): HasMany
     {
         return $this->hasMany(ClassSubject::class);
+    }
+
+    /**
+     * @return HasMany<Enrollment, $this>
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Élèves qui occupent une place (préinscrits et inscrits).
+     */
+    public function occupiedSeats(): int
+    {
+        return $this->enrollments()->active()->count();
+    }
+
+    public function isFull(): bool
+    {
+        return $this->capacity !== null && $this->occupiedSeats() >= $this->capacity;
     }
 
     /**

@@ -9,6 +9,8 @@ final class NavigationGroups
 {
     public const SCHOOL_YEAR = 'Année scolaire';
 
+    public const STUDENTS = 'Élèves';
+
     public const STAFF = 'Personnel';
 
     public const SETTINGS = 'Paramètres';

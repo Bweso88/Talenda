@@ -43,6 +43,11 @@ return [
         'structure.manage',
         'staff.view',
         'staff.manage',
+        // Inscriptions (étape 2).
+        'student.view',
+        'student.manage',
+        'enrollment.manage',
+        'document.issue',
     ],
 
     /*
@@ -57,15 +62,20 @@ return [
             'membership.view', 'audit.view',
             'school_year.manage', 'structure.view', 'structure.manage',
             'staff.view', 'staff.manage',
+            'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
         ],
         'academic_director' => [
             'membership.view',
             'school_year.manage', 'structure.view', 'structure.manage',
             'staff.view',
+            'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
         ],
-        'secretary' => ['membership.view', 'structure.view', 'staff.view'],
-        'accountant' => ['structure.view'],
-        'cashier' => ['structure.view'],
+        'secretary' => [
+            'membership.view', 'structure.view', 'staff.view',
+            'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
+        ],
+        'accountant' => ['structure.view', 'student.view'],
+        'cashier' => ['structure.view', 'student.view'],
         'teacher' => ['structure.view'],
         'supervisor' => ['structure.view'],
         'parent' => [],
@@ -150,6 +160,14 @@ return [
                 'A' => 'Série A (littéraire)',
                 'C' => 'Série C (mathématiques et sciences physiques)',
                 'D' => 'Série D (mathématiques et sciences naturelles)',
+            ],
+            // Pièces demandées pour le dossier d'inscription.
+            'enrollment_documents' => [
+                'birth_certificate' => 'Acte de naissance',
+                'photos' => 'Photos d\'identité',
+                'previous_report_card' => 'Bulletin de l\'année précédente',
+                'leaving_certificate' => 'Certificat de radiation (élève venant d\'une autre école)',
+                'exam_transcript' => 'Relevé de notes de l\'examen (CEPE, BEPC)',
             ],
             // Matières proposées, par cycle concerné.
             'subjects' => [

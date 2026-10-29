@@ -32,8 +32,11 @@ final class SchoolClassPolicy
         return $user->can('structure.manage') && ! $schoolClass->schoolYear->isClosed();
     }
 
+    /**
+     * Une classe qui a déjà eu des élèves reste dans l'historique.
+     */
     public function delete(User $user, SchoolClass $schoolClass): bool
     {
-        return $this->update($user, $schoolClass);
+        return $this->update($user, $schoolClass) && ! $schoolClass->enrollments()->exists();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Modules\Core\Tenancy\TenantContext;
+use Filament\Forms\Components\DatePicker;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -38,6 +39,13 @@ class AppServiceProvider extends ServiceProvider
         Password::defaults(fn () => $isProduction
             ? Password::min(10)->letters()->numbers()->uncompromised()
             : Password::min(10));
+
+        // Dates toujours saisies et affichées en JJ/MM/AAAA, quelle que soit
+        // la langue du navigateur (le sélecteur natif suit celle-ci).
+        DatePicker::configureUsing(fn (DatePicker $datePicker) => $datePicker
+            ->native(false)
+            ->displayFormat('d/m/Y')
+            ->firstDayOfWeek(1));
 
         // Connexion : limitée par identifiant ET par adresse IP
         // (docs/PRODUCT_ARCHITECTURE.md §14).

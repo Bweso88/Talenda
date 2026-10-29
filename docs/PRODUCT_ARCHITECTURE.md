@@ -377,8 +377,8 @@ l'argent ni pour les notes (`numeric(5,2)` pour les notes).
   `re_enrollment`), date, décision de fin d'année (`promoted`, `repeat`,
   `excluded`, `graduated`). Index partiel : une seule inscription active par
   élève et par année.
-- `enrollment_documents` : pièces du dossier (acte de naissance, bulletin
-  précédent…) avec statut fourni / manquant.
+- ~~`enrollment_documents`~~ : remplacée par la colonne `enrollments.documents`
+  (jsonb, codes des pièces fournies ; liste des pièces dans le gabarit du pays).
 - `student_transfers` : école d'origine / de destination, motif.
 
 ### 8.4 Finances / scolarité
@@ -705,4 +705,10 @@ l'étape N.
 | 2026-10-30 | Clés étrangères composites `(tenant_id, …)` partout, avec `ON DELETE SET NULL (colonne)` | La base refuse tout lien entre deux écoles ; la liste de colonnes du SET NULL (PostgreSQL 15+) évite de vider `tenant_id` |
 | 2026-10-30 | La création d'une école applique le gabarit du pays pour les cycles choisis et ouvre l'année scolaire en cours | Une école est utilisable dès sa création, sans saisie de structure |
 | 2026-10-30 | Avatars générés localement (initiales) dans les back-offices | Pas d'appel à un service tiers, rien à télécharger sur une connexion lente |
+| 2026-10-31 | Module `Enrollments` : élèves (identité permanente), responsables (uniques par téléphone dans l'école), inscriptions élève × année × classe | Historique multi-années natif ; fratries saisies une seule fois |
+| 2026-10-31 | Matricule « AA-NNNN » (année de première inscription + numéro d'ordre), via un compteur verrouillé par école (`tenant_sequences`) | Lisible, sans trou ni doublon même en saisie simultanée ; le même compteur servira aux reçus et factures |
+| 2026-10-31 | Pièces du dossier en colonne `enrollments.documents` (jsonb) plutôt qu'une table | Une simple liste cochée suffit tant qu'on ne stocke pas les scans ; à revoir si l'on numérise les pièces |
+| 2026-10-31 | PDF générés avec **dompdf** (PHP pur) au lieu de Chromium ; polices réduites aux caractères utilisés | Aucun navigateur à installer sur le serveur (Laravel Cloud) ; certificat ≈ 30 Ko. À réévaluer pour des bulletins très mis en page |
+| 2026-10-31 | Import Excel/CSV en deux temps (analyse complète, puis import tout ou rien) | L'école corrige toutes ses erreurs d'un coup ; jamais d'import à moitié fait |
+| 2026-10-31 | Les enseignants n'ont pas encore accès aux fiches élèves | À ouvrir à l'étape 4, limité à leurs classes (notes, absences) |
 | 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |
