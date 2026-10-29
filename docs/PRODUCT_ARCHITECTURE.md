@@ -654,7 +654,6 @@ l'étape N.
 
 | Sujet | Proposition | Alternative |
 |---|---|---|
-| Base de données | PostgreSQL | MySQL (comme Scolia), si l'hébergement visé l'impose |
 | Back-office | Filament 4 | Inertia + Vue / React, si l'on veut une interface sur mesure (coût de développement bien plus élevé) |
 | Mobile | Flutter (expérience Scolia) | React Native / Expo (même langage TypeScript que d'éventuels outils web) |
 | Hébergement | Laravel Cloud ou VPS géré (Forge) avec Redis + worker de file d'attente | Mutualisé : **déconseillé** (pas de files d'attente fiables, ni de Chromium pour les PDF) |
@@ -670,4 +669,5 @@ l'étape N.
 | Date | Décision | Raison |
 |---|---|---|
 | 2026-10-29 | Talenda repart de zéro ; Scolia sert de référence fonctionnelle | Passage d'un cahier de liaison à une gestion scolaire complète ; corriger les limites de modèle de Scolia (identité, inscriptions, notes) |
+| 2026-10-29 | **PostgreSQL** retenu (au lieu de MySQL, pourtant mieux maîtrisé par l'équipe) | Contraintes `CHECK` et index partiels pour les règles métier (une inscription active par élève et par année), `numeric` exact pour l'argent et les notes, requêtes analytiques du pilotage, Row-Level Security possible en seconde barrière d'isolation. Coût d'apprentissage limité : Eloquent et les migrations Laravel masquent la plupart des différences |
 | 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |
