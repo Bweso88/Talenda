@@ -7,8 +7,10 @@ use App\Filament\School\Resources\SchoolYears\Pages\CreateSchoolYear;
 use App\Filament\School\Resources\StaffMembers\Pages\ListStaffMembers;
 use App\Models\User;
 use App\Modules\Academic\Models\Level;
+use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\SchoolYear;
+use App\Modules\Academic\Models\Site;
 use App\Modules\Academic\Models\StaffMember;
 use App\Modules\Core\Tenancy\TenantContext;
 use Filament\Actions\Testing\TestAction;
@@ -74,6 +76,45 @@ it('crée une classe dans l\'année ouverte', function () {
         ->tenant_id->toBe($this->school->id)
         ->level_id->toBe($level->id);
 });
+
+it('demande le site de la classe, même avec un seul site, et propose les salles préenregistrées du site', function () {
+    actInSchool($this->admin, $this->school);
+    $main = Site::sole();
+    $north = Site::create(['name' => 'Site Nord']);
+    $room = Room::create(['site_id' => $north->id, 'name' => 'Salle 4', 'capacity' => 48]);
+    Room::create(['site_id' => $main->id, 'name' => 'Salle 1']);
+
+    Livewire::test(CreateSchoolClass::class)
+        ->assertSchemaStateSet(['site_id' => $main->id])
+        ->fillForm(['site_id' => $north->id, 'level_id' => Level::firstWhere('code', '6E')->id, 'name' => '6e Nord'])
+        ->assertFormFieldExists('room_id', fn ($field) => array_values($field->getOptions()) === ['Salle 4'])
+        ->fillForm(['room_id' => $room->id])
+        ->assertSchemaStateSet(['capacity' => 48])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(SchoolClass::firstWhere('name', '6e Nord'))
+        ->site_id->toBe($north->id)
+        ->room_id->toBe($room->id);
+});
+
+it('crée une salle depuis le formulaire de la classe', function () {
+    actInSchool($this->admin, $this->school);
+
+    Livewire::test(CreateSchoolClass::class)
+        ->fillForm(['level_id' => Level::firstWhere('code', '6E')->id, 'name' => '6e B'])
+        ->callAction(TestAction::make('createOption')->schemaComponent('room_id', 'form'), ['name' => 'Salle 7', 'capacity' => 50])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(SchoolClass::firstWhere('name', '6e B')->room)
+        ->name->toBe('Salle 7')
+        ->site_id->toBe(Site::sole()->id);
+});
+
+it('ouvre les écrans des sites et des salles', function (string $path) {
+    $this->actingAs($this->admin)->get("/ecole/lycee-a/{$path}")->assertOk();
+})->with(['sites', 'salles']);
 
 it('crée une année scolaire avec ses trimestres depuis le back-office', function () {
     actInSchool($this->admin, $this->school);

@@ -28,17 +28,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $stream_id
  * @property string $name
  * @property int|null $capacity
- * @property string|null $room
+ * @property int|null $room_id
  * @property int|null $head_teacher_id
  * @property SchoolYear $schoolYear
  * @property Site|null $site
+ * @property Room|null $room
  * @property Level $level
  * @property Stream|null $stream
  * @property StaffMember|null $headTeacher
  */
 #[UseFactory(SchoolClassFactory::class)]
 #[UsePolicy(SchoolClassPolicy::class)]
-#[Fillable(['school_year_id', 'site_id', 'level_id', 'stream_id', 'name', 'capacity', 'room', 'head_teacher_id'])]
+#[Fillable(['school_year_id', 'site_id', 'level_id', 'stream_id', 'name', 'capacity', 'room_id', 'head_teacher_id'])]
 class SchoolClass extends Model
 {
     use BelongsToTenant;
@@ -73,6 +74,14 @@ class SchoolClass extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    /**
+     * @return BelongsTo<Room, $this>
+     */
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class);
     }
 
     /**
