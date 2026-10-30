@@ -66,6 +66,14 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('login:'.mb_strtolower((string) $request->input('login'))),
             Limit::perMinute(20)->by('login-ip:'.$request->ip()),
         ]);
+
+        // Vérification d'identifiants par une application partenaire : tous
+        // les parents arrivent de l'adresse IP de son serveur, la limite se
+        // fait donc par identifiant et par clé d'intégration.
+        RateLimiter::for('integration-login', fn (Request $request): array => [
+            Limit::perMinute(5)->by('integration-login:'.mb_strtolower((string) $request->input('login'))),
+            Limit::perMinute(300)->by('integration-client:'.hash('sha256', (string) $request->bearerToken())),
+        ]);
     }
 
     /**

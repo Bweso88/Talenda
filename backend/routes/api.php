@@ -6,6 +6,9 @@ use App\Modules\Core\Http\Controllers\Api\V1\AuthController;
 use App\Modules\Core\Http\Controllers\Api\V1\CurrentTenantController;
 use App\Modules\Core\Http\Controllers\Api\V1\MeController;
 use App\Modules\Core\Http\Middleware\ResolveApiTenant;
+use App\Modules\Integrations\Http\Controllers\CredentialsController;
+use App\Modules\Integrations\Http\Controllers\SnapshotController;
+use App\Modules\Integrations\Http\Middleware\AuthenticateIntegration;
 use App\Modules\ParentPortal\Http\Controllers\ChildAttendanceController;
 use App\Modules\ParentPortal\Http\Controllers\ChildFinancesController;
 use App\Modules\ParentPortal\Http\Controllers\ChildrenController;
@@ -53,3 +56,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         });
     });
 });
+
+/*
+ * API d'intégration des applications partenaires (Scolia) : la clé de
+ * l'école tient lieu d'authentification (AuthenticateIntegration).
+ */
+Route::prefix('integration/v1')
+    ->name('api.integration.v1.')
+    ->middleware([AuthenticateIntegration::class, 'throttle:120,1'])
+    ->group(function (): void {
+        Route::get('snapshot', SnapshotController::class)->name('snapshot');
+        Route::post('credentials/check', CredentialsController::class)
+            ->middleware('throttle:integration-login')
+            ->name('credentials.check');
+    });

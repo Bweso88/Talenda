@@ -66,6 +66,8 @@ return [
         // Communication (étape 7).
         'communication.send',
         'communication.manage',
+        // Applications partenaires (Scolia).
+        'integration.manage',
     ],
 
     /*
@@ -84,7 +86,7 @@ return [
             'finance.view', 'finance.manage', 'payment.reverse',
             'assessment.enter', 'assessment.manage', 'term.manage', 'term.reopen', 'report_card.view',
             'attendance.take', 'attendance.manage', 'discipline.manage',
-            'communication.send', 'communication.manage',
+            'communication.send', 'communication.manage', 'integration.manage',
         ],
         'academic_director' => [
             'membership.view',

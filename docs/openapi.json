@@ -779,6 +779,87 @@
                 }
             }
         },
+        "/integration/v1/credentials/check": {
+            "post": {
+                "operationId": "integration.v1.credentials.check",
+                "tags": [
+                    "Credentials"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "login",
+                                    "password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "account_uuid": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "phone": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "must_change_password": {
+                                            "type": "boolean"
+                                        },
+                                        "roles": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "account_uuid",
+                                        "name",
+                                        "phone",
+                                        "email",
+                                        "must_change_password",
+                                        "roles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/tenant": {
             "get": {
                 "operationId": "v1.tenant",
@@ -1042,6 +1123,341 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/integration/v1/snapshot": {
+            "get": {
+                "operationId": "integration.v1.snapshot",
+                "tags": [
+                    "Snapshot"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "generated_at": {
+                                            "type": "string"
+                                        },
+                                        "school": {
+                                            "type": "object",
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "name": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "timezone": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "uuid",
+                                                "name",
+                                                "timezone"
+                                            ]
+                                        },
+                                        "school_year": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "starts_on": {
+                                                    "type": "string"
+                                                },
+                                                "ends_on": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "uuid",
+                                                "name",
+                                                "starts_on",
+                                                "ends_on"
+                                            ]
+                                        },
+                                        "subjects": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "uuid",
+                                                    "code",
+                                                    "name"
+                                                ]
+                                            }
+                                        },
+                                        "classes": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "uuid": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "level": {
+                                                                "type": "string"
+                                                            },
+                                                            "level_code": {
+                                                                "type": "string"
+                                                            },
+                                                            "stream": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "head_teacher_uuid": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "uuid",
+                                                            "name",
+                                                            "level",
+                                                            "level_code",
+                                                            "stream",
+                                                            "head_teacher_uuid"
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "uuid": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "level": {
+                                                                "type": "string"
+                                                            },
+                                                            "level_code": {
+                                                                "type": "string"
+                                                            },
+                                                            "stream": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "head_teacher_uuid": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "uuid",
+                                                            "name",
+                                                            "level",
+                                                            "level_code",
+                                                            "stream",
+                                                            "head_teacher_uuid"
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "staff": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "first_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "last_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "full_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "position": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "teacher",
+                                                            "director",
+                                                            "academic_director",
+                                                            "secretary",
+                                                            "accountant",
+                                                            "cashier",
+                                                            "supervisor",
+                                                            "other"
+                                                        ]
+                                                    },
+                                                    "phone": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "email": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "account_uuid": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "uuid",
+                                                    "first_name",
+                                                    "last_name",
+                                                    "full_name",
+                                                    "position",
+                                                    "phone",
+                                                    "email",
+                                                    "is_active",
+                                                    "account_uuid"
+                                                ]
+                                            }
+                                        },
+                                        "teaching": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "class_uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "subject_uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "teacher_uuid": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "coefficient": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "class_uuid",
+                                                    "subject_uuid",
+                                                    "teacher_uuid",
+                                                    "coefficient"
+                                                ]
+                                            }
+                                        },
+                                        "students": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "registration_number": {
+                                                        "type": "string"
+                                                    },
+                                                    "last_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "first_names": {
+                                                        "type": "string"
+                                                    },
+                                                    "gender": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "F",
+                                                            "M"
+                                                        ]
+                                                    },
+                                                    "birth_date": {
+                                                        "type": "string"
+                                                    },
+                                                    "class_uuid": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "uuid",
+                                                    "registration_number",
+                                                    "last_name",
+                                                    "first_names",
+                                                    "gender",
+                                                    "birth_date",
+                                                    "class_uuid"
+                                                ]
+                                            }
+                                        },
+                                        "guardians": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "generated_at",
+                                        "school",
+                                        "school_year",
+                                        "subjects",
+                                        "classes",
+                                        "staff",
+                                        "teaching",
+                                        "students",
+                                        "guardians"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
