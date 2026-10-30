@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Filament\School\Resources\Cycles\Pages;
+
+use App\Filament\School\Resources\Cycles\CycleResource;
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ManageRecords;
+
+class ManageCycles extends ManageRecords
+{
+    protected static string $resource = CycleResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make(),
+        ];
+    }
+}

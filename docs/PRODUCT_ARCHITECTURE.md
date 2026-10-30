@@ -44,6 +44,37 @@ de 100 à 3 000 élèves. Conséquences directes sur la conception :
   coefficients, rangs) → **tout ce qui est réglementaire est paramétrable**,
   rien n'est codé en dur.
 
+### Marché de lancement : République du Congo (Brazzaville)
+
+Les premières écoles clientes sont au Congo-Brazzaville. Le produit reste
+multi-pays (tout est paramétrable par tenant), mais les **valeurs par défaut
+d'une nouvelle école** et le paramétrage de démo sont ceux du Congo :
+
+| Paramètre | Valeur par défaut |
+|---|---|
+| Devise | **XAF** (franc CFA BEAC), sans décimales : montants stockés en francs entiers |
+| Fuseau horaire | `Africa/Brazzaville` (UTC+1) |
+| Langue | Français |
+| Téléphone | Indicatif **+242**, numéros à 9 chiffres (06 MTN, 05 / 04 Airtel), normalisés au format E.164 |
+| Année scolaire | Octobre → juin / juillet, découpée en **3 trimestres** |
+| Notation | Sur **20**, coefficients par matière, rang dans la classe, mentions |
+| Cycles et niveaux | Préscolaire · Primaire (CP1, CP2, CE1, CE2, CM1, CM2) · Collège (6e → 3e) · Lycée (2nde → Terminale) |
+| Séries du lycée | Générales A (littéraire), C (mathématiques-physique), D (mathématiques-sciences naturelles) ; séries techniques activables au besoin |
+| Examens nationaux | CEPE (fin CM2), BEPC (fin 3e), Baccalauréat (Terminale) : suivis comme classes d'examen (frais d'examen, listes de candidats, résultats) |
+| Mobile money | **MTN Mobile Money** et **Airtel Money**, les deux opérateurs du pays |
+| Données personnelles | Loi congolaise sur la protection des données à caractère personnel (loi n° 29-2019), à faire valider par un juriste local avant la mise en production |
+
+Ces valeurs sont un **gabarit de pays** (`country_presets` : `CG` au
+lancement) appliqué à la création d'une école, puis modifiable par
+l'école. Ajouter le Gabon, le Cameroun ou la RDC revient à ajouter un
+gabarit, sans changer le code.
+
+À vérifier sur le terrain auprès de l'école pilote avant l'étape 4 : le
+modèle exact de bulletin utilisé (disposition, appréciations, signatures,
+cachet), le calcul de la moyenne trimestrielle (poids des devoirs par rapport
+à la composition) et celui de la moyenne annuelle (moyenne simple des 3
+trimestres ou pondérée).
+
 ---
 
 ## 2. Ce que l'on reprend de Scolia, et ce que l'on corrige
@@ -67,6 +98,33 @@ de 100 à 3 000 élèves. Conséquences directes sur la conception :
 | Notifications envoyées de façon synchrone (contrainte d'hébergement) | File d'attente dès le jour 1 ; l'hébergement est choisi pour la supporter. |
 | Aucun module financier | **Module Finances au cœur du MVP**, conçu comme un registre comptable (aucune suppression, uniquement des écritures correctives). |
 | Migrations corrigées a posteriori pour être idempotentes en production | Migrations testées en CI sur une base vierge **et** sur une copie de la base de démo avant tout déploiement. |
+
+### Relation avec Scolia : deux produits distincts, jonction prévue
+
+- **Scolia reste un produit à part entière**, avec son propre dépôt, son
+  backend et son app mobile. Le développement de Talenda **ne modifie
+  jamais** le dépôt Scolia : on le lit comme référence, rien de plus.
+- **À terme, une jonction** est prévue pour la **communication avec les
+  parents** : Scolia apportera son savoir-faire de cahier de liaison
+  (messagerie, devoirs, comportement, annonces), Talenda les données de
+  gestion (élèves, classes, responsables, notes, finances). La forme exacte
+  (API entre les deux, fusion des apps parents, Scolia comme module de
+  Talenda) sera décidée au moment de la jonction, pas maintenant.
+- **Pour l'instant, on ne développe que Talenda.** Mais on le conçoit pour
+  que la jonction soit simple :
+  - identifiants publics stables (**UUID**) sur les entités partageables
+    (écoles, élèves, responsables, classes, personnel), en plus des `id`
+    internes ;
+  - événements métier explicites (`StudentEnrolled`, `GuardianLinked`,
+    `TermResultsPublished`, `PaymentRecorded`…) déclenchés par les Actions,
+    pour pouvoir plus tard les diffuser à Scolia (webhooks ou file de
+    messages) sans toucher au code métier ;
+  - API v1 documentée en OpenAPI, réutilisable par Scolia ;
+  - le module **Communication** de Talenda reste volontairement **minimal**
+    (annonces + notifications). Messagerie, cahier de texte et comportement
+    (prévus en V2) sont **à réarbitrer avant d'être développés** : ils
+    pourraient venir de Scolia lors de la jonction plutôt qu'être
+    réécrits.
 
 ---
 
@@ -271,7 +329,7 @@ l'école.
 Conventions : `id` bigint, `tenant_id` sur toute table métier,
 `timestamps`, `soft_deletes` là où la suppression doit rester auditable.
 **Montants** : entiers en unité monétaire minimale (`bigint`) + code devise
-ISO 4217 au niveau du tenant (XOF, XAF, CDF, GNF…). Jamais de `float` pour
+ISO 4217 au niveau du tenant (XAF au lancement ; XOF, CDF, GNF… ensuite). Jamais de `float` pour
 l'argent ni pour les notes (`numeric(5,2)` pour les notes).
 
 ### 8.1 Plateforme (hors tenant)
@@ -300,11 +358,11 @@ l'argent ni pour les notes (`numeric(5,2)` pour les notes).
 - `classes` : année, niveau, série, nom (« 6e B »), capacité, salle,
   professeur principal.
 - `subjects` (matières de l'école), `class_subjects` (matière × classe ×
-  coefficient, éventuellement regroupée dans un `subject_group` :
-  « Matières littéraires »…).
+  coefficient × enseignant ; regroupement en `subject_group` reporté
+  jusqu'au besoin réel des bulletins).
 - `staff_members` : personnel (lié à une `membership` s'il a un compte),
   fonction, matricule.
-- `teaching_assignments` : enseignant × classe × matière × année.
+- ~~`teaching_assignments`~~ : remplacée par `class_subjects.teacher_id` (un enseignant par matière et par classe, l'année étant portée par la classe) — voir le journal des décisions.
 
 ### 8.3 Inscriptions & dossiers élèves
 - `students` : identité **permanente** (matricule unique par tenant, nom,
@@ -319,8 +377,8 @@ l'argent ni pour les notes (`numeric(5,2)` pour les notes).
   `re_enrollment`), date, décision de fin d'année (`promoted`, `repeat`,
   `excluded`, `graduated`). Index partiel : une seule inscription active par
   élève et par année.
-- `enrollment_documents` : pièces du dossier (acte de naissance, bulletin
-  précédent…) avec statut fourni / manquant.
+- ~~`enrollment_documents`~~ : remplacée par la colonne `enrollments.documents`
+  (jsonb, codes des pièces fournies ; liste des pièces dans le gabarit du pays).
 - `student_transfers` : école d'origine / de destination, motif.
 
 ### 8.4 Finances / scolarité
@@ -370,12 +428,15 @@ annulation de paiement), avec motif et auteur.
   paramétrage de l'école).
 
 ### 8.6 Vie scolaire
-- `attendance_sessions` (appel : classe × date × créneau) et
-  `attendance_records` (élève, statut `present` / `absent` / `late`, motif).
-- `absence_justifications` : justification par le parent ou la vie
-  scolaire, pièce jointe, validation.
-- V2 : `disciplinary_incidents`, `sanctions`, `timetable_slots`,
-  `rooms`.
+- `attendance_slots` : créneaux d'appel de l'école (matin, après-midi…).
+- `attendance_sessions` (appel : classe × date × créneau, durée recopiée)
+  et `attendance_records` (absents et retardataires seulement : statut
+  `absent` / `late`, minutes de retard, remarque).
+- `absence_justifications` : période couverte, motif, statut (`accepted`
+  si saisi par l'école, `pending` si déposé par un parent).
+- `disciplinary_incidents` : faits, sanction (rappel à l'ordre →
+  exclusion définitive), jours d'exclusion, parents informés.
+- V2 : `timetable_slots`, `rooms`.
 
 ### 8.7 Communication
 - `announcements` + `announcement_targets` (école, cycle, niveau, classe,
@@ -623,13 +684,12 @@ l'étape N.
 
 | Sujet | Proposition | Alternative |
 |---|---|---|
-| Base de données | PostgreSQL | MySQL (comme Scolia), si l'hébergement visé l'impose |
 | Back-office | Filament 4 | Inertia + Vue / React, si l'on veut une interface sur mesure (coût de développement bien plus élevé) |
-| Mobile | Flutter (expérience Scolia) | React Native / Expo (même langage TypeScript que d'éventuels outils web) |
-| Hébergement | Laravel Cloud ou VPS géré (Forge) avec Redis + worker de file d'attente | Mutualisé : **déconseillé** (pas de files d'attente fiables, ni de Chromium pour les PDF) |
+| Hébergement de **production** | Laravel Cloud ou VPS géré (Forge) avec Redis + worker de file d'attente — choix et coûts à comparer avant la mise en production | Mutualisé : **déconseillé** (pas de files d'attente fiables, ni de Chromium pour les PDF) |
 | Tenant côté web | Sous-domaine par école | Sélection de l'école après connexion |
 | Connexion parent | Téléphone + mot de passe au MVP, code SMS (OTP) en V2 | OTP dès le MVP (coût SMS) |
-| Agrégateur mobile money (V2) | À choisir selon les pays des premières écoles (CinetPay, FedaPay, Flutterwave…) | Intégration directe des opérateurs |
+| Mobile money (V2) | Agrégateur couvrant **MTN MoMo et Airtel Money au Congo** (couverture, frais et délais de reversement à vérifier auprès des fournisseurs) | Intégration directe des API MTN MoMo et Airtel Money (deux contrats, deux intégrations) |
+| SMS (V2) | Fournisseur local ou agrégateur avec bonne délivrabilité sur MTN et Airtel Congo, nom d'expéditeur au nom de l'école | — |
 
 ---
 
@@ -638,3 +698,66 @@ l'étape N.
 | Date | Décision | Raison |
 |---|---|---|
 | 2026-10-29 | Talenda repart de zéro ; Scolia sert de référence fonctionnelle | Passage d'un cahier de liaison à une gestion scolaire complète ; corriger les limites de modèle de Scolia (identité, inscriptions, notes) |
+| 2026-10-29 | **PostgreSQL** retenu (au lieu de MySQL, pourtant mieux maîtrisé par l'équipe) | Contraintes `CHECK` et index partiels pour les règles métier (une inscription active par élève et par année), `numeric` exact pour l'argent et les notes, requêtes analytiques du pilotage, Row-Level Security possible en seconde barrière d'isolation. Coût d'apprentissage limité : Eloquent et les migrations Laravel masquent la plupart des différences |
+| 2026-10-29 | **Flutter** pour l'app mobile (Android d'abord, Riverpod, client API généré depuis l'OpenAPI, cache hors ligne en lecture) | Rendu homogène et performant sur Android d'entrée de gamme, expérience acquise sur Scolia, app sans besoin de partage de code avec un front web |
+| 2026-10-29 | Scolia reste un produit séparé, non modifié ; jonction future sur la communication parents ; développement uniquement sur Talenda | Préserver Scolia ; concevoir Talenda (UUID publics, événements métier, API documentée, communication minimale) pour faciliter la jonction |
+| 2026-10-29 | Développement hébergé sur **Laravel Cloud** (comme Yosefa / ged-pme), file d'attente `database` ; choix de la production reporté | Pas de coût pendant le développement ; Laravel Cloud gère PostgreSQL. Comparaison Laravel Cloud / Forge à faire avant la mise en production |
+| 2026-10-29 | Isolation des écoles **fermée par défaut** : sans école active, un modèle d'école ne renvoie aucune ligne et ne peut pas être créé | Corrige le comportement de Scolia, où l'absence d'école active désactivait le filtre |
+| 2026-10-30 | Structure scolaire dans un module `Academic` (années, périodes, cycles, niveaux, séries, classes, matières, personnel) | Isoler le socle technique (`Core` : écoles, comptes, isolation) de la structure pédagogique |
+| 2026-10-30 | `class_subjects` porte le coefficient **et** l'enseignant ; pas de table `teaching_assignments` | Un enseignant par matière et par classe couvre le cas réel ; une table de moins à maintenir et à isoler. À revoir si le co-enseignement apparaît |
+| 2026-10-30 | Clés étrangères composites `(tenant_id, …)` partout, avec `ON DELETE SET NULL (colonne)` | La base refuse tout lien entre deux écoles ; la liste de colonnes du SET NULL (PostgreSQL 15+) évite de vider `tenant_id` |
+| 2026-10-30 | La création d'une école applique le gabarit du pays pour les cycles choisis et ouvre l'année scolaire en cours | Une école est utilisable dès sa création, sans saisie de structure |
+| 2026-10-30 | Avatars générés localement (initiales) dans les back-offices | Pas d'appel à un service tiers, rien à télécharger sur une connexion lente |
+| 2026-10-31 | Module `Enrollments` : élèves (identité permanente), responsables (uniques par téléphone dans l'école), inscriptions élève × année × classe | Historique multi-années natif ; fratries saisies une seule fois |
+| 2026-10-31 | Matricule « AA-NNNN » (année de première inscription + numéro d'ordre), via un compteur verrouillé par école (`tenant_sequences`) | Lisible, sans trou ni doublon même en saisie simultanée ; le même compteur servira aux reçus et factures |
+| 2026-10-31 | Pièces du dossier en colonne `enrollments.documents` (jsonb) plutôt qu'une table | Une simple liste cochée suffit tant qu'on ne stocke pas les scans ; à revoir si l'on numérise les pièces |
+| 2026-10-31 | PDF générés avec **dompdf** (PHP pur) au lieu de Chromium ; polices réduites aux caractères utilisés | Aucun navigateur à installer sur le serveur (Laravel Cloud) ; certificat ≈ 30 Ko. À réévaluer pour des bulletins très mis en page |
+| 2026-10-31 | Import Excel/CSV en deux temps (analyse complète, puis import tout ou rien) | L'école corrige toutes ses erreurs d'un coup ; jamais d'import à moitié fait |
+| 2026-10-31 | Les enseignants n'ont pas encore accès aux fiches élèves | À ouvrir à l'étape 4, limité à leurs classes (notes, absences) |
+| 2026-11-01 | Module `Finances` : types de frais, grille tarifaire par année et par niveau, plans de paiement (mensuel, trimestriel, annuel, modifiables), facture par inscription, caisses et encaissements | Demande des écoles : paiement mensuel possible au même titre que par tranches, au choix de chaque famille |
+| 2026-11-01 | Échéancier **calculé** (non stocké) à partir des lignes de facture et du plan ; paiements affectés aux échéances les plus anciennes ; pas de table `payment_allocations` | Une réduction ou un changement de plan donne immédiatement un échéancier juste, sans données à resynchroniser |
+| 2026-11-01 | Élève inscrit en cours d'année : les échéances déjà passées deviennent dues le jour de l'inscription | Il doit ces mois, mais n'est pas « en retard » dès son premier jour |
+| 2026-11-01 | Facture créée par un écouteur de `StudentEnrolled`, dans la même transaction ; Finances branché par événements (`TenantProvisioned`, `SchoolYearCreated`, `NextSchoolYearPrepared`) | Les modules Inscriptions et Structure ne dépendent pas de Finances ; pas d'inscription sans facture |
+| 2026-11-01 | Lignes de facture et paiements en écriture seule ; correction par ligne négative ou annulation motivée ; un caissier ne peut pas annuler son propre encaissement | Traçabilité comptable et séparation des tâches (§12) |
+| 2026-11-01 | Espèces : session de caisse ouverte obligatoire ; mobile money, virement, chèque : référence obligatoire (contrainte en base) | Clôture de caisse juste ; paiements électroniques vérifiables |
+| 2026-11-01 | Numérotation sans trou : factures `F2026-00001` par année scolaire, reçus `R2026-00001` par année civile ; le reçu affiche la situation au moment du paiement | Exigence comptable ; un reçu réimprimé reste identique |
+| 2026-11-02 | Module `Assessments` : paramètres de notation par école, types d'évaluation pondérés, évaluations par classe-matière, notes (avec absent / dispensé), appréciations, résultats de période et annuels | Étape 4 du plan ; branché sur l'Académique et les Inscriptions sans les modifier |
+| 2026-11-02 | Calcul : moyenne de matière = moyenne pondérée des moyennes par type (devoirs, composition) ; moyenne générale = moyennes de matière **arrondies** × coefficients ; arrondi au centième supérieur à partir de 5 ; rangs avec ex æquo | Reproduit le calcul « à la main » des bulletins congolais ; un calcul pur (`GradeCalculator`) testé unitairement. Poids de la composition à valider avec l'école pilote |
+| 2026-11-02 | Cycle d'une période : ouverte → verrouillée → publiée ; la publication **fige** les résultats (libellés copiés) ; la réouverture les supprime et exige la permission `term.reopen` | Un bulletin publié ne change plus, même si une matière ou un coefficient est modifié ensuite |
+| 2026-11-02 | Bulletin PDF généré à la demande à partir des résultats figés, sans stockage de fichier | Toujours identique au bulletin publié, rien à stocker sur un disque non permanent (Laravel Cloud) |
+| 2026-11-02 | Un enseignant ne voit et ne note que ses propres classes-matières ; l'évaluation d'un autre enseignant répond « introuvable » (404) | Ne pas révéler l'existence de données hors de son périmètre |
+| 2026-11-02 | Élève parti en cours de période exclu du classement ; moyenne annuelle = moyenne des périodes publiées ; décisions de fin d'année proposées (passage, admis, redoublement) puis validées par la direction | Classement juste ; la décision reste humaine |
+| 2026-11-02 | Pas d'absences sur le bulletin pour l'instant | Elles viendront avec le module Vie scolaire (fait le 2026-11-03) |
+| 2026-11-03 | Module `SchoolLife` (vie scolaire) : créneaux d'appel par école, appels par classe × jour × créneau, absences et retards, justificatifs, registre de discipline | Étape 5 (option A) ; prépare le bulletin complet et l'app des parents |
+| 2026-11-03 | Seuls les absents et les retardataires sont enregistrés ; un appel sans ligne = toute la classe présente ; refaire l'appel le corrige | Saisie rapide sur téléphone (tout le monde présent par défaut), peu de données |
+| 2026-11-03 | Absences comptées en **heures** : durée du créneau recopiée sur l'appel (créneaux par défaut : matin 7 h 30 – 12 h 30, après-midi 14 h 30 – 17 h 30) | Usage des bulletins congolais ; un changement d'horaires ne modifie pas les absences passées |
+| 2026-11-03 | Caractère « justifié » **calculé** : un justificatif accepté couvre une période de dates ; pas de lien stocké absence → justificatif | Un certificat médical couvre plusieurs jours, même déposé avant ou après l'appel ; rien à resynchroniser |
+| 2026-11-03 | L'enseignant fait l'appel de ses classes (matières ou professeur principal), **le jour même** ; la vie scolaire (surveillant, censeur, direction) à toute date et justifie | Limite les corrections après coup ; nouveau rôle `supervisor` doté des droits de vie scolaire |
+| 2026-11-03 | Absences et retards figés sur le bulletin à la publication ; les appels d'une période publiée ne se modifient plus ; un justificatif tardif ne change pas un bulletin publié | Même principe que les moyennes : un bulletin publié ne change plus |
+| 2026-11-03 | Date du jour calculée à l'heure de l'école (`SchoolClock`), pas du serveur (UTC) | Un appel fait tôt le matin ou tard le soir compte pour le bon jour |
+| 2026-11-03 | Pièce jointe des justificatifs (scan du certificat) non stockée pour l'instant | Pas de stockage permanent sur Laravel Cloud tant qu'aucun bucket n'est attaché ; justificatifs déposés par les parents prévus avec l'app (statut « à examiner ») |
+| 2026-11-04 | Accès parent ouvert **explicitement** par l'école depuis la fiche élève (`guardians.user_id`), jamais déduit du seul téléphone | Un numéro peut être réattribué par l'opérateur ; l'école garde la main (ouverture, fermeture) |
+| 2026-11-04 | Module `ParentPortal` : API v1 des parents sous `/children` (résumé, scolarité, reçus, bulletins publiés, absences, discipline) ; enfant d'un autre parent = 404 | Contrat minimal pour l'app et pour la future jonction avec Scolia ; ne pas révéler l'existence des autres élèves |
+| 2026-11-04 | Justificatif déposé par un parent : statut « à examiner », accepté ou refusé par la vie scolaire (compteur dans le menu) | L'école reste juge du caractère justifié d'une absence |
+| 2026-11-04 | Documentation OpenAPI générée (Scramble) dans `docs/openapi.json`, un test vérifie qu'elle est à jour ; l'app teste ses modèles sur de vraies réponses de l'API | Le contrat entre backend et app ne peut pas dériver sans que la CI le voie |
+| 2026-11-04 | App Flutter `mobile/` : Riverpod, go_router, Dio ; modèles écrits à la main (pas de génération de code) ; jeton dans le stockage chiffré ; dernière réponse de chaque écran gardée pour la lecture hors ligne | Peu d'écrans : du code simple à lire ; réseau mobile instable au Congo |
+| 2026-11-04 | Identité visuelle : logo Talenda, bleu (#1E5AA8) et bleu marine (#0F2C5C) du logo dans l'app et les back-offices ; maquettes fournies comme référence de style | Demande de l'équipe ; les mentions de certifications des maquettes (MEPSA, OHADA…) ne sont pas reprises tant qu'elles ne sont pas réelles |
+| 2026-11-04 | Messages de validation en français (`lang/fr`) | Les erreurs de formulaire affichaient la clé technique |
+| 2026-11-05 | Module `Communication` : notifications dans l'app (par compte et par école), SMS, annonces, relances d'impayés, réglages par école | Étape 7 ; les familles sans smartphone sont touchées par SMS |
+| 2026-11-05 | Fournisseurs SMS et push derrière une interface (`SmsGateway`, `PushGateway`), choisis par `SMS_DRIVER` / `PUSH_DRIVER` ; pilote « log » en développement (rien n'est envoyé) | Choix du fournisseur (agrégateur MTN / Airtel) et projet Firebase reportés à la mise en production, sans toucher au reste du code |
+| 2026-11-05 | Chaque SMS est journalisé (`sms_messages`) avec son nombre de SMS facturés ; envoi en file d'attente après validation de la transaction | Suivi du coût, preuve d'envoi, aucun SMS pour une action annulée |
+| 2026-11-05 | Accents hors alphabet GSM remplacés avant l'envoi (â→a, ê→e, ç→c…) ; é, è, à, ù conservés | Un seul « â » (Grâce) fait passer un SMS de 160 à 70 caractères et double son coût |
+| 2026-11-05 | Dans l'app : toujours prévenir (gratuit) ; par SMS : seulement si l'école l'active (absence, paiement, bulletin) ; un SMS par famille, au contact principal | Maîtrise du coût ; pas de doublon pour une fratrie |
+| 2026-11-05 | Mot de passe provisoire envoyé par SMS immédiatement, sans passer par la file d'attente, et masqué dans le journal | Le secret n'est jamais stocké |
+| 2026-11-05 | Corriger un appel ne prévient pas deux fois ; une famille n'est relancée qu'une fois par jour pour une facture | Éviter le harcèlement et les coûts inutiles |
+| 2026-11-06 | Thème des back-offices en CSS simple (`public/css/talenda-admin.css`) chargé par un « render hook », sans thème Filament compilé | Aucune étape de build (npm) à l'installation ni au déploiement ; le style suit les maquettes (barre latérale bleu marine, cartes) |
+| 2026-11-06 | Tableau de bord par rôle : bandeau et raccourcis, indicateurs (inscrits, présents du jour, encaissé et taux de recouvrement, retards), actions prioritaires, encaissements par mois, répartition par cycle, activité récente ; vue « Mes classes aujourd'hui » pour l'enseignant | Chacun voit ce qui le concerne, calculé à la demande (`DashboardFigures`) |
+| 2026-11-06 | Mode sombre désactivé dans les back-offices | Le thème n'est conçu que pour le mode clair |
+| 2026-11-06 | Jonction avec Scolia : Talenda est la référence (élèves, classes, matières, enseignants, responsables) ; Scolia garde messagerie, cahier de texte, emploi du temps — voir `docs/JONCTION_SCOLIA.md` | Pas de double saisie dans les écoles ; chaque produit garde son point fort |
+| 2026-11-06 | API d'intégration par clé d'école (`integration_clients`, empreinte SHA-256, révocable) : photographie de l'année ouverte et vérification d'identifiants | Scolia lit sans compte utilisateur ; un parent a un seul mot de passe (celui de Talenda) |
+| 2026-11-07 | Trésorerie : chaque mouvement d'argent passe une écriture SYSCOHADA révisé (journal exportable pour le comptable) ; pas de comptabilité complète dans Talenda — voir `docs/TRESORERIE.md` | Les écoles tiennent leur caisse et confient la comptabilité à un comptable ; les caissiers ne manipulent pas de comptes |
+| 2026-11-07 | Sites : classes (donc élèves) et caisses rattachées à un site ; le caissier d'un site ne voit que ses élèves ; une école à un seul site n'a rien à régler | Écoles à plusieurs implantations avec une caisse par site et une caisse centrale |
+| 2026-11-07 | Caisses typées (espèces 571, mobile money 552, banque 521) dont le solde se lit dans le journal ; les espèces attendues à la clôture sont ce solde | Un seul chiffre fait foi : il inclut encaissements, dépenses, avances et virements |
+| 2026-11-07 | Dépenses, salaires (paiement simple) et avances au-delà d'un seuil réglable (50 000 F) validés par la direction, jamais par la personne qui les saisit ; une caisse ne passe jamais sous zéro | Contrôle des sorties d'argent sans alourdir les petites dépenses |
+| 2026-11-07 | Avance à justifier suivie jusqu'au retour de la facture et de la monnaie ; virement entre caisses « en route » jusqu'au comptage à l'arrivée ; écarts en 658 / 758 | La monnaie rendue et les écarts de comptage ne se perdent pas |
+| 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |

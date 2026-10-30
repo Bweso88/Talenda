@@ -1,0 +1,102 @@
+# Talenda — backend
+
+Application Laravel 13 (API mobile + back-offices Filament) de Talenda.
+Architecture de référence : [`../docs/PRODUCT_ARCHITECTURE.md`](../docs/PRODUCT_ARCHITECTURE.md).
+
+## Installation en local
+
+Prérequis : PHP 8.3+ (8.4 recommandé), Composer, PostgreSQL 15+ (16 recommandé).
+
+```bash
+composer install
+cp .env.example .env          # puis renseigner DB_PASSWORD
+php artisan key:generate
+createdb talenda && createdb talenda_test
+php artisan migrate --seed    # écoles et comptes de démonstration
+php artisan storage:link      # logos des écoles
+php artisan serve
+```
+
+| Adresse | Usage |
+|---|---|
+| `/ecole` | Back-office des écoles (connexion par e-mail **ou** téléphone) |
+| `/platform` | Back-office plateforme (Super Admins Talenda) |
+| `/api/v1` | API de l'app mobile (jetons Sanctum, en-tête `X-Tenant`) |
+
+Comptes de démonstration (mot de passe : `talenda-demo`) :
+
+| Compte | Identifiant | Accès |
+|---|---|---|
+| Super Admin | `admin@talenda.test` | `/platform` |
+| Directeur | `06 111 11 11` | Lycée Démo de Brazzaville |
+| Directrice | `05 222 22 22` | Collège Démo de Pointe-Noire |
+| Parent | `06 333 33 33` | App parents : deux enfants au Lycée de Brazzaville, compte aussi au Collège de Pointe-Noire |
+| Caissier | `06 444 44 10` | Lycée Démo de Brazzaville (caisse ouverte) |
+| Enseignant | `06 444 44 02` | Lycée Démo de Brazzaville (ses matières et ses classes seulement) |
+| Surveillant général | `06 444 44 20` | Lycée Démo de Brazzaville (appel, absences, discipline) |
+
+`composer run dev` lance le serveur et la file d'attente (envoi des SMS et
+des notifications de bulletins). Les SMS ne sont pas réellement envoyés en
+développement (`SMS_DRIVER=log`) : ils apparaissent dans le journal SMS du
+back-office et dans `storage/logs/laravel.log`.
+
+Le Lycée Démo de Brazzaville contient une structure complète (collège et
+lycée, 3 classes avec coefficients, 3 enseignants) et 7 élèves inscrits,
+dont une fratrie, avec une grille tarifaire, quelques encaissements,
+des notes du premier trimestre et les appels des derniers jours de classe.
+
+## Vérifications
+
+Les mêmes que l'intégration continue (`.github/workflows/backend.yml`) :
+
+```bash
+vendor/bin/pint --test
+vendor/bin/phpstan analyse
+vendor/bin/pest
+```
+
+Les tests utilisent la base PostgreSQL `talenda_test`.
+
+## Organisation du code
+
+- `app/Modules/<Module>/` : code métier par module (modèles, actions,
+  politiques, contrôleurs API, middlewares).
+  - `Core` : écoles, comptes, isolation des écoles, audit ;
+  - `Academic` : années scolaires, périodes, cycles, niveaux, séries,
+    classes, matières et coefficients, personnel ;
+  - `Enrollments` : élèves, responsables, inscriptions et réinscriptions,
+    import Excel, certificats de scolarité et cartes scolaires (PDF) ;
+  - `Finances` : grille tarifaire, plans de paiement, factures, caisse,
+    reçus, impayés. Branché sur les autres modules par événements
+    (`FinancesServiceProvider`) ;
+  - `Assessments` : notation, saisie des notes, appréciations, conseil de
+    classe, publication des périodes, bulletins (PDF), moyennes annuelles
+    et décisions de fin d'année ;
+  - `SchoolLife` : appel (absences, retards), justificatifs, discipline ;
+    absences reportées sur le bulletin ;
+  - `ParentPortal` : accès des parents (ouvert par l'école) et API v1 de
+    l'app parents (`mobile/`) ;
+  - `Communication` : notifications dans l'app, SMS (journal, coût),
+    annonces, relances d'impayés, messages automatiques (absence,
+    paiement, bulletin), réglages par école.
+
+Documentation de l'API : `/docs/api` en local, et `docs/openapi.json`
+(contrat de l'app, à régénérer après tout changement de l'API :
+`php artisan scramble:export --path=../docs/openapi.json`).
+- `app/Filament/School/` et `app/Filament/Platform/` : écrans des deux
+  back-offices.
+- `config/talenda.php` : catalogues des modules, rôles, permissions et
+  gabarits de pays.
+
+Règle d'or de l'isolation des écoles : tout modèle métier d'une école
+utilise le trait `BelongsToTenant`. Sans école active, ses requêtes ne
+renvoient rien (voir `app/Modules/Core/Tenancy/TenantContext.php`).
+
+## Mise en ligne (Laravel Cloud)
+
+Guide pas à pas : [`../docs/DEPLOIEMENT.md`](../docs/DEPLOIEMENT.md)
+(application avec `backend` comme dossier racine, base PostgreSQL, file
+d'attente, données de démonstration, APK de l'app parents).
+
+Le choix de l'hébergement de production (Laravel Cloud ou VPS avec Forge)
+sera fait au moment de la mise en production.

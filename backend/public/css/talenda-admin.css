@@ -1,0 +1,373 @@
+/*
+ * Thème Talenda des back-offices (couleurs du logo).
+ *
+ * CSS simple, sans compilation : Filament range ses styles dans des
+ * couches (@layer), ces règles hors couche passent donc devant. Les
+ * classes .tl-* servent aux widgets du tableau de bord.
+ */
+:root {
+    --tl-navy: #0f2c5c;
+    --tl-navy-2: #16386f;
+    --tl-blue: #1e5aa8;
+    --tl-teal: #1a9aa0;
+    --tl-orange: #f0a030;
+    --tl-bg: #f4f7fb;
+    --tl-field: #eef3fa;
+    --tl-border: #e3eaf3;
+    --tl-muted: #5b6b82;
+    --tl-success: #1b8a5a;
+    --tl-success-soft: #ddf4e9;
+    --tl-danger: #c0392b;
+    --tl-danger-soft: #fbe3e0;
+    --tl-warning: #b86e00;
+    --tl-warning-soft: #fff0d6;
+}
+
+.fi-body {
+    background: var(--tl-bg);
+}
+
+/* Barre latérale bleu marine. */
+.fi-sidebar,
+.fi-sidebar-header,
+.fi-sidebar-nav {
+    background: var(--tl-navy);
+}
+
+.fi-sidebar {
+    border-inline-end: none;
+}
+
+.fi-sidebar-group-label,
+.fi-sidebar-group-btn,
+.fi-sidebar-group-collapse-btn {
+    color: #9fb3d1;
+}
+
+.fi-sidebar-group-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.72rem;
+}
+
+.fi-sidebar-item-btn {
+    color: #dce6f5;
+    border-radius: 0.6rem;
+}
+
+.fi-sidebar-item-btn .fi-sidebar-item-label {
+    color: #dce6f5;
+}
+
+.fi-sidebar-item-btn .fi-sidebar-item-icon {
+    color: #9fb3d1;
+}
+
+.fi-sidebar-item-btn:hover,
+.fi-sidebar-item-btn:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-btn {
+    background: var(--tl-blue);
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-btn .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active .fi-sidebar-item-btn .fi-sidebar-item-icon {
+    color: #fff;
+}
+
+.fi-sidebar-item-grouped-border-part,
+.fi-sidebar-item-grouped-border-part-not-first,
+.fi-sidebar-item-grouped-border-part-not-last {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Sélecteur d'école en haut de la barre latérale. */
+.fi-sidebar .fi-tenant-menu-trigger {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 0.75rem;
+}
+
+.fi-sidebar .fi-tenant-menu-trigger-tenant-name,
+.fi-sidebar .fi-tenant-menu-trigger-current-tenant-label,
+.fi-sidebar .fi-tenant-menu-trigger svg {
+    color: #fff;
+}
+
+.fi-sidebar .fi-tenant-menu-trigger-current-tenant-label {
+    color: #9fb3d1;
+}
+
+/* Cartes plus douces. */
+.fi-section,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat {
+    border-radius: 1rem;
+}
+
+/* Page de connexion : fond bleu marine, carte blanche. */
+.fi-simple-layout {
+    background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(30, 90, 168, 0.55), transparent 60%),
+        linear-gradient(160deg, var(--tl-navy) 0%, #0b2149 100%);
+}
+
+.fi-simple-main {
+    border-radius: 1.25rem;
+    box-shadow: 0 24px 60px rgba(4, 18, 45, 0.35);
+}
+
+.fi-simple-layout .tl-login-footer {
+    color: #b8cbe6;
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 1.5rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tableau de bord                                                     */
+/* ------------------------------------------------------------------ */
+
+.tl-card {
+    background: #fff;
+    border: 1px solid var(--tl-border);
+    border-radius: 1rem;
+    padding: 1.25rem;
+}
+
+.tl-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--tl-navy);
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.tl-muted {
+    color: var(--tl-muted);
+}
+
+.tl-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    color: #fff;
+    background:
+        radial-gradient(600px 240px at 90% -20%, rgba(240, 160, 48, 0.28), transparent 60%),
+        linear-gradient(135deg, var(--tl-navy) 0%, var(--tl-navy-2) 60%, var(--tl-blue) 140%);
+}
+
+.tl-banner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tl-banner-chip::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #6ee7b7;
+}
+
+.tl-banner h2 {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.tl-banner p {
+    margin: 0;
+    color: #b8cbe6;
+}
+
+.tl-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.tl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1rem;
+    border-radius: 0.7rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.tl-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tl-btn-primary {
+    background: var(--tl-blue);
+    border-color: var(--tl-blue);
+}
+
+.tl-btn-primary:hover {
+    background: #2468bf;
+}
+
+.tl-btn svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.tl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.tl-list-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+
+.tl-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.85rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--tl-border);
+    text-decoration: none;
+    color: inherit;
+}
+
+a.tl-item:hover {
+    border-color: #c6d5ea;
+    background: #fafcff;
+}
+
+.tl-item-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.7rem;
+    background: var(--tl-field);
+    color: var(--tl-blue);
+}
+
+.tl-item-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tl-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.tl-item-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: var(--tl-navy);
+    font-weight: 700;
+}
+
+.tl-item-text {
+    margin-top: 0.15rem;
+    color: var(--tl-muted);
+    font-size: 0.875rem;
+}
+
+.tl-pill {
+    flex: none;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--tl-field);
+    color: var(--tl-blue);
+    white-space: nowrap;
+}
+
+.tl-tone-danger .tl-item-icon,
+.tl-pill.tl-tone-danger {
+    background: var(--tl-danger-soft);
+    color: var(--tl-danger);
+}
+
+.tl-tone-warning .tl-item-icon,
+.tl-pill.tl-tone-warning {
+    background: var(--tl-warning-soft);
+    color: var(--tl-warning);
+}
+
+.tl-tone-success .tl-item-icon,
+.tl-pill.tl-tone-success {
+    background: var(--tl-success-soft);
+    color: var(--tl-success);
+}
+
+.tl-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--tl-muted);
+}
+
+.tl-bar {
+    display: flex;
+    height: 0.8rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--tl-field);
+}
+
+.tl-bar > span {
+    display: block;
+    height: 100%;
+}
+
+.tl-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-top: 0.85rem;
+    font-size: 0.875rem;
+}
+
+.tl-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tl-legend i {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+}
+
+.tl-time {
+    flex: none;
+    color: var(--tl-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+}

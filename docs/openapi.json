@@ -1,0 +1,2320 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "Talenda \u2014 API mobile",
+        "version": "1.0.0",
+        "description": "API de l'app mobile Talenda (docs/PRODUCT_ARCHITECTURE.md \u00a710).\n\n- Connexion : `POST /v1/auth/login` (t\u00e9l\u00e9phone ou e-mail), puis jeton Bearer.\n- \u00c9cole : les routes d'une \u00e9cole exigent l'en-t\u00eate `X-Tenant` (uuid de\n  l'\u00e9cole, voir `GET /v1/me`).\n- Montants en francs CFA (entiers), dates au format AAAA-MM-JJ."
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api"
+        }
+    ],
+    "security": [
+        {
+            "http": []
+        }
+    ],
+    "paths": {
+        "/v1/auth/login": {
+            "post": {
+                "operationId": "v1.auth.login",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "user"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "operationId": "v1.auth.logout",
+                "tags": [
+                    "Auth"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/password": {
+            "post": {
+                "operationId": "v1.auth.password",
+                "summary": "Changement de mot de passe, obligatoire \u00e0 la premi\u00e8re connexion avec\nun mot de passe provisoire. Les autres appareils sont d\u00e9connect\u00e9s",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "user"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/attendance": {
+            "get": {
+                "operationId": "v1.children.attendance",
+                "tags": [
+                    "ChildAttendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "school_year": {
+                                                            "type": "string"
+                                                        },
+                                                        "totals": {
+                                                            "$ref": "#/components/schemas/AttendanceTotalResource"
+                                                        },
+                                                        "records": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "date": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "slot": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "present",
+                                                                            "absent",
+                                                                            "late"
+                                                                        ]
+                                                                    },
+                                                                    "status_label": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "Pr\u00e9sent",
+                                                                            "Absent",
+                                                                            "Retard"
+                                                                        ]
+                                                                    },
+                                                                    "hours": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "late_minutes": {
+                                                                        "type": [
+                                                                            "integer",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "is_justified": {
+                                                                        "type": [
+                                                                            "boolean",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "date",
+                                                                    "slot",
+                                                                    "status",
+                                                                    "status_label",
+                                                                    "hours",
+                                                                    "late_minutes",
+                                                                    "is_justified"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "justifications": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/AbsenceJustificationResource"
+                                                            }
+                                                        },
+                                                        "incidents": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "date": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "sanction": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "none",
+                                                                            "warning",
+                                                                            "detention",
+                                                                            "reprimand",
+                                                                            "suspension",
+                                                                            "expulsion"
+                                                                        ]
+                                                                    },
+                                                                    "sanction_label": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "Rappel \u00e0 l'ordre",
+                                                                            "Avertissement",
+                                                                            "Retenue",
+                                                                            "Bl\u00e2me",
+                                                                            "Exclusion temporaire",
+                                                                            "Exclusion d\u00e9finitive"
+                                                                        ]
+                                                                    },
+                                                                    "suspension_days": {
+                                                                        "type": [
+                                                                            "integer",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "date",
+                                                                    "description",
+                                                                    "sanction",
+                                                                    "sanction_label",
+                                                                    "suspension_days"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "school_year",
+                                                        "totals",
+                                                        "records",
+                                                        "justifications",
+                                                        "incidents"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/absence-justifications": {
+            "post": {
+                "operationId": "v1.children.absence-justifications.store",
+                "summary": "Le parent d\u00e9pose un justificatif : la vie scolaire l'examinera",
+                "tags": [
+                    "ChildAttendance"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitAbsenceJustificationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`AbsenceJustificationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AbsenceJustificationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/finances": {
+            "get": {
+                "operationId": "v1.children.finances",
+                "tags": [
+                    "ChildFinances"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `InvoiceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InvoiceResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/payments/{payment}/receipt": {
+            "get": {
+                "operationId": "v1.children.receipt",
+                "summary": "Re\u00e7u PDF d'un paiement, identique \u00e0 celui remis au guichet",
+                "tags": [
+                    "ChildFinances"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "payment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/results": {
+            "get": {
+                "operationId": "v1.children.results.index",
+                "tags": [
+                    "ChildResults"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `TermResultResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TermResultResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/results/{result}": {
+            "get": {
+                "operationId": "v1.children.results.show",
+                "tags": [
+                    "ChildResults"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "result",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TermResultResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/TermResultResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "subjects"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}/results/{result}/report-card": {
+            "get": {
+                "operationId": "v1.children.results.report-card",
+                "summary": "Bulletin PDF, identique \u00e0 celui imprim\u00e9 par l'\u00e9cole",
+                "tags": [
+                    "ChildResults"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "result",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children": {
+            "get": {
+                "operationId": "v1.children.index",
+                "tags": [
+                    "Children"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ChildResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ChildResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/children/{child}": {
+            "get": {
+                "operationId": "v1.children.show",
+                "tags": [
+                    "Children"
+                ],
+                "parameters": [
+                    {
+                        "name": "child",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ChildResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ChildResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/integration/v1/credentials/check": {
+            "post": {
+                "operationId": "integration.v1.credentials.check",
+                "tags": [
+                    "Credentials"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "login",
+                                    "password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "account_uuid": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "phone": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "must_change_password": {
+                                            "type": "boolean"
+                                        },
+                                        "roles": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "account_uuid",
+                                        "name",
+                                        "phone",
+                                        "email",
+                                        "must_change_password",
+                                        "roles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/tenant": {
+            "get": {
+                "operationId": "v1.tenant",
+                "tags": [
+                    "CurrentTenant"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MembershipResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MembershipResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/device-tokens": {
+            "post": {
+                "operationId": "v1.device-tokens.store",
+                "tags": [
+                    "DeviceTokens"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "maxLength": 512
+                                    },
+                                    "platform": {
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios",
+                                            "web"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "token",
+                                    "platform"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.device-tokens.destroy",
+                "tags": [
+                    "DeviceTokens"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 512
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/me": {
+            "get": {
+                "operationId": "v1.me",
+                "tags": [
+                    "Me"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        },
+                                        "memberships": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MembershipResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "user",
+                                        "memberships"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications": {
+            "get": {
+                "operationId": "v1.notifications.index",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationResource"
+                                            }
+                                        },
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "unread_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/read-all": {
+            "post": {
+                "operationId": "v1.notifications.read-all",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/{notification}/read": {
+            "post": {
+                "operationId": "v1.notifications.read",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true,
+                        "description": "uuid de l'\u00e9cole (voir GET /v1/me).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/integration/v1/snapshot": {
+            "get": {
+                "operationId": "integration.v1.snapshot",
+                "tags": [
+                    "Snapshot"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "generated_at": {
+                                            "type": "string"
+                                        },
+                                        "school": {
+                                            "type": "object",
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "name": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "timezone": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "uuid",
+                                                "name",
+                                                "timezone"
+                                            ]
+                                        },
+                                        "school_year": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "starts_on": {
+                                                    "type": "string"
+                                                },
+                                                "ends_on": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "uuid",
+                                                "name",
+                                                "starts_on",
+                                                "ends_on"
+                                            ]
+                                        },
+                                        "subjects": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "uuid",
+                                                    "code",
+                                                    "name"
+                                                ]
+                                            }
+                                        },
+                                        "classes": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "uuid": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "level": {
+                                                                "type": "string"
+                                                            },
+                                                            "level_code": {
+                                                                "type": "string"
+                                                            },
+                                                            "stream": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "head_teacher_uuid": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "uuid",
+                                                            "name",
+                                                            "level",
+                                                            "level_code",
+                                                            "stream",
+                                                            "head_teacher_uuid"
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "uuid": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "level": {
+                                                                "type": "string"
+                                                            },
+                                                            "level_code": {
+                                                                "type": "string"
+                                                            },
+                                                            "stream": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "head_teacher_uuid": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "uuid",
+                                                            "name",
+                                                            "level",
+                                                            "level_code",
+                                                            "stream",
+                                                            "head_teacher_uuid"
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "staff": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "first_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "last_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "full_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "position": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "teacher",
+                                                            "director",
+                                                            "academic_director",
+                                                            "secretary",
+                                                            "accountant",
+                                                            "cashier",
+                                                            "supervisor",
+                                                            "other"
+                                                        ]
+                                                    },
+                                                    "phone": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "email": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "account_uuid": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "uuid",
+                                                    "first_name",
+                                                    "last_name",
+                                                    "full_name",
+                                                    "position",
+                                                    "phone",
+                                                    "email",
+                                                    "is_active",
+                                                    "account_uuid"
+                                                ]
+                                            }
+                                        },
+                                        "teaching": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "class_uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "subject_uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "teacher_uuid": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "coefficient": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "class_uuid",
+                                                    "subject_uuid",
+                                                    "teacher_uuid",
+                                                    "coefficient"
+                                                ]
+                                            }
+                                        },
+                                        "students": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "registration_number": {
+                                                        "type": "string"
+                                                    },
+                                                    "last_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "first_names": {
+                                                        "type": "string"
+                                                    },
+                                                    "gender": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "F",
+                                                            "M"
+                                                        ]
+                                                    },
+                                                    "birth_date": {
+                                                        "type": "string"
+                                                    },
+                                                    "class_uuid": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "uuid",
+                                                    "registration_number",
+                                                    "last_name",
+                                                    "first_names",
+                                                    "gender",
+                                                    "birth_date",
+                                                    "class_uuid"
+                                                ]
+                                            }
+                                        },
+                                        "guardians": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "generated_at",
+                                        "school",
+                                        "school_year",
+                                        "subjects",
+                                        "classes",
+                                        "staff",
+                                        "teaching",
+                                        "students",
+                                        "guardians"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "http": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "AbsenceJustificationResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "starts_on": {
+                        "type": "string"
+                    },
+                    "ends_on": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "illness",
+                            "family",
+                            "transport",
+                            "other"
+                        ]
+                    },
+                    "reason_label": {
+                        "type": "string",
+                        "enum": [
+                            "Maladie",
+                            "Raison familiale",
+                            "Probl\u00e8me de transport",
+                            "Autre motif"
+                        ]
+                    },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "rejected"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "\u00c0 examiner",
+                            "Accept\u00e9",
+                            "Refus\u00e9"
+                        ]
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "starts_on",
+                    "ends_on",
+                    "reason",
+                    "reason_label",
+                    "comment",
+                    "status",
+                    "status_label"
+                ],
+                "title": "AbsenceJustificationResource"
+            },
+            "AttendanceTotalResource": {
+                "type": "object",
+                "properties": {
+                    "absence_minutes": {
+                        "type": "integer"
+                    },
+                    "justified_absence_minutes": {
+                        "type": "integer"
+                    },
+                    "unjustified_absence_minutes": {
+                        "type": "integer"
+                    },
+                    "late_count": {
+                        "type": "integer"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "absence_minutes",
+                    "justified_absence_minutes",
+                    "unjustified_absence_minutes",
+                    "late_count",
+                    "label"
+                ],
+                "title": "AttendanceTotalResource"
+            },
+            "ChildResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "type": "string"
+                    },
+                    "first_names": {
+                        "type": "string"
+                    },
+                    "full_name": {
+                        "type": "string"
+                    },
+                    "registration_number": {
+                        "type": "string"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "F",
+                            "M"
+                        ]
+                    },
+                    "birth_date": {
+                        "type": "string"
+                    },
+                    "enrollment": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "uuid": {
+                                "type": "string"
+                            },
+                            "school_year": {
+                                "type": "string"
+                            },
+                            "class_name": {
+                                "type": "string"
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pre_registered",
+                                    "enrolled",
+                                    "transferred_out",
+                                    "withdrawn",
+                                    "completed"
+                                ]
+                            },
+                            "status_label": {
+                                "type": "string",
+                                "enum": [
+                                    "Pr\u00e9inscrit",
+                                    "Inscrit",
+                                    "Transf\u00e9r\u00e9",
+                                    "Parti",
+                                    "Ann\u00e9e termin\u00e9e"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "uuid",
+                            "school_year",
+                            "class_name",
+                            "status",
+                            "status_label"
+                        ]
+                    },
+                    "finance": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "total": {
+                                "type": "integer"
+                            },
+                            "paid": {
+                                "type": "integer"
+                            },
+                            "balance": {},
+                            "overdue": {
+                                "type": "integer"
+                            },
+                            "next_due": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "due_on": {
+                                        "type": "string"
+                                    },
+                                    "remaining": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "due_on",
+                                    "remaining"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "total",
+                            "paid",
+                            "balance",
+                            "overdue",
+                            "next_due"
+                        ]
+                    },
+                    "last_result": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "uuid": {
+                                "type": "string"
+                            },
+                            "term": {
+                                "type": "string"
+                            },
+                            "school_year": {
+                                "type": "string"
+                            },
+                            "average": {
+                                "type": [
+                                    "number",
+                                    "null"
+                                ]
+                            },
+                            "rank": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "rank_label": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "class_size": {
+                                "type": "integer"
+                            },
+                            "distinction": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "published_at": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "uuid",
+                            "term",
+                            "school_year",
+                            "average",
+                            "rank",
+                            "rank_label",
+                            "class_size",
+                            "distinction",
+                            "published_at"
+                        ]
+                    },
+                    "attendance": {
+                        "$ref": "#/components/schemas/AttendanceTotalResource"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "last_name",
+                    "first_names",
+                    "full_name",
+                    "registration_number",
+                    "gender",
+                    "birth_date",
+                    "enrollment",
+                    "finance",
+                    "last_result",
+                    "attendance"
+                ],
+                "title": "ChildResource"
+            },
+            "InvoiceResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "school_year": {
+                        "type": "string"
+                    },
+                    "class_name": {
+                        "type": "string"
+                    },
+                    "payment_plan": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "paid": {
+                        "type": "integer"
+                    },
+                    "balance": {},
+                    "overdue": {
+                        "type": "integer"
+                    },
+                    "installments": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "payments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentResource"
+                        }
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "number",
+                    "school_year",
+                    "class_name",
+                    "payment_plan",
+                    "total",
+                    "paid",
+                    "balance",
+                    "overdue",
+                    "installments",
+                    "payments"
+                ],
+                "title": "InvoiceResource"
+            },
+            "JustificationReason": {
+                "type": "string",
+                "enum": [
+                    "illness",
+                    "family",
+                    "transport",
+                    "other"
+                ],
+                "title": "JustificationReason"
+            },
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "login": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "device_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "login",
+                    "password",
+                    "device_name"
+                ],
+                "title": "LoginRequest"
+            },
+            "MembershipResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "suspended"
+                        ]
+                    },
+                    "tenant": {
+                        "$ref": "#/components/schemas/TenantResource"
+                    },
+                    "roles": {
+                        "type": "string",
+                        "description": "Les r\u00f4les d\u00e9pendent de l'\u00e9cole : on les lit dans son contexte."
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "status",
+                    "tenant",
+                    "roles"
+                ],
+                "title": "MembershipResource"
+            },
+            "NotificationResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "report_card",
+                            "absence",
+                            "payment",
+                            "payment_reminder",
+                            "justification",
+                            "announcement"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "string",
+                        "description": "child (uuid de l'enfant), tab (finances, results, attendance), result, announcement."
+                    },
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "type",
+                    "title",
+                    "body",
+                    "data",
+                    "read",
+                    "created_at"
+                ],
+                "title": "NotificationResource"
+            },
+            "PaymentResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "receipt_number": {
+                        "type": "string"
+                    },
+                    "paid_on": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "integer"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "cash",
+                            "mobile_money",
+                            "bank_transfer",
+                            "cheque"
+                        ]
+                    },
+                    "method_label": {
+                        "type": "string",
+                        "enum": [
+                            "Esp\u00e8ces",
+                            "Mobile money (MTN, Airtel)",
+                            "Virement bancaire",
+                            "Ch\u00e8que"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "valid",
+                            "reversed"
+                        ]
+                    },
+                    "has_receipt": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "receipt_number",
+                    "paid_on",
+                    "amount",
+                    "method",
+                    "method_label",
+                    "status",
+                    "has_receipt"
+                ],
+                "title": "PaymentResource"
+            },
+            "SubmitAbsenceJustificationRequest": {
+                "type": "object",
+                "properties": {
+                    "starts_on": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "ends_on": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "reason": {
+                        "$ref": "#/components/schemas/JustificationReason"
+                    },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "starts_on",
+                    "ends_on",
+                    "reason"
+                ],
+                "title": "SubmitAbsenceJustificationRequest"
+            },
+            "TenantResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "country_code": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "locale": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "read_only",
+                            "suspended"
+                        ]
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "name",
+                    "slug",
+                    "country_code",
+                    "currency",
+                    "timezone",
+                    "locale",
+                    "status"
+                ],
+                "title": "TenantResource"
+            },
+            "TermResultResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "term": {
+                        "type": "string"
+                    },
+                    "school_year": {
+                        "type": "string"
+                    },
+                    "average": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "rank": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "rank_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "class_size": {
+                        "type": "integer"
+                    },
+                    "distinction": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "published_at": {
+                        "type": "string"
+                    },
+                    "class_name": {
+                        "type": "string"
+                    },
+                    "class_average": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "class_highest": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "class_lowest": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "total_points": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "total_coefficient": {
+                        "type": "number"
+                    },
+                    "council_comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "head_teacher_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "attendance": {
+                        "$ref": "#/components/schemas/AttendanceTotalResource"
+                    },
+                    "subjects": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "subject": {
+                                    "type": "string"
+                                },
+                                "teacher": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "coefficient": {
+                                    "type": "number"
+                                },
+                                "average": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ]
+                                },
+                                "rank": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "class_average": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ]
+                                },
+                                "class_highest": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ]
+                                },
+                                "class_lowest": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ]
+                                },
+                                "comment": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "subject",
+                                "teacher",
+                                "coefficient",
+                                "average",
+                                "rank",
+                                "class_average",
+                                "class_highest",
+                                "class_lowest",
+                                "comment"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "term",
+                    "school_year",
+                    "average",
+                    "rank",
+                    "rank_label",
+                    "class_size",
+                    "distinction",
+                    "published_at",
+                    "class_name",
+                    "class_average",
+                    "class_highest",
+                    "class_lowest",
+                    "total_points",
+                    "total_coefficient",
+                    "council_comment",
+                    "head_teacher_name",
+                    "attendance"
+                ],
+                "title": "TermResultResource"
+            },
+            "UserResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "must_change_password": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "name",
+                    "phone",
+                    "email",
+                    "must_change_password"
+                ],
+                "title": "UserResource"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "AuthenticationException": {
+                "description": "Unauthenticated",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
