@@ -92,22 +92,11 @@ Règle d'or de l'isolation des écoles : tout modèle métier d'une école
 utilise le trait `BelongsToTenant`. Sans école active, ses requêtes ne
 renvoient rien (voir `app/Modules/Core/Tenancy/TenantContext.php`).
 
-## Déploiement de développement (Laravel Cloud)
+## Mise en ligne (Laravel Cloud)
 
-Comme Yosefa (`ged-pme`), l'environnement de développement est hébergé sur
-Laravel Cloud, avec sa base PostgreSQL :
-
-1. Créer une application à partir du dépôt GitHub `Bweso88/Talenda`, avec
-   `backend` comme dossier racine de l'application.
-2. Attacher une base PostgreSQL.
-3. Commande de déploiement :
-   `php artisan migrate --force && php artisan talenda:sync-permissions`
-4. Pour une base de démonstration, lancer une fois `php artisan db:seed --force`.
-   Activer aussi un « queue worker » (file d'attente `database`) : c'est lui
-   qui envoie les SMS et les notifications de bulletins.
-5. Fichiers : le disque local de Laravel Cloud n'est pas permanent.
-   Attacher un stockage objet (bucket) avant de téléverser de vrais logos
-   (disque `public`) et photos d'élèves (disque `local`, privé).
+Guide pas à pas : [`../docs/DEPLOIEMENT.md`](../docs/DEPLOIEMENT.md)
+(application avec `backend` comme dossier racine, base PostgreSQL, file
+d'attente, données de démonstration, APK de l'app parents).
 
 Le choix de l'hébergement de production (Laravel Cloud ou VPS avec Forge)
 sera fait au moment de la mise en production.

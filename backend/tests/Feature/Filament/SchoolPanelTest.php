@@ -70,3 +70,7 @@ it('refuse un mauvais mot de passe', function () {
 
     $this->assertGuest();
 });
+
+it('mène de l\'accueil du site au back-office des écoles', function () {
+    $this->get('/')->assertRedirect('/ecole');
+});
