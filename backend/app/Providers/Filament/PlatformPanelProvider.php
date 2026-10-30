@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Support\BrandColors;
 use App\Filament\Support\InitialsAvatarProvider;
+use App\Filament\Support\TalendaTheme;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -23,7 +24,7 @@ class PlatformPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        return TalendaTheme::apply($panel)
             ->id('platform')
             ->path('platform')
             ->login()

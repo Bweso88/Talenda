@@ -750,4 +750,7 @@ l'étape N.
 | 2026-11-05 | Dans l'app : toujours prévenir (gratuit) ; par SMS : seulement si l'école l'active (absence, paiement, bulletin) ; un SMS par famille, au contact principal | Maîtrise du coût ; pas de doublon pour une fratrie |
 | 2026-11-05 | Mot de passe provisoire envoyé par SMS immédiatement, sans passer par la file d'attente, et masqué dans le journal | Le secret n'est jamais stocké |
 | 2026-11-05 | Corriger un appel ne prévient pas deux fois ; une famille n'est relancée qu'une fois par jour pour une facture | Éviter le harcèlement et les coûts inutiles |
+| 2026-11-06 | Thème des back-offices en CSS simple (`public/css/talenda-admin.css`) chargé par un « render hook », sans thème Filament compilé | Aucune étape de build (npm) à l'installation ni au déploiement ; le style suit les maquettes (barre latérale bleu marine, cartes) |
+| 2026-11-06 | Tableau de bord par rôle : bandeau et raccourcis, indicateurs (inscrits, présents du jour, encaissé et taux de recouvrement, retards), actions prioritaires, encaissements par mois, répartition par cycle, activité récente ; vue « Mes classes aujourd'hui » pour l'enseignant | Chacun voit ce qui le concerne, calculé à la demande (`DashboardFigures`) |
+| 2026-11-06 | Mode sombre désactivé dans les back-offices | Le thème n'est conçu que pour le mode clair |
 | 2026-10-29 | Marché de lancement : Congo-Brazzaville (XAF, 3 trimestres, notes sur 20, MTN MoMo / Airtel Money) | Pays des premières écoles clientes ; paramètres portés par un gabarit de pays pour rester multi-pays |

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Filament\School\Support\DashboardFigures;
 use App\Modules\Core\Http\Middleware\ResolveApiTenant;
 use App\Modules\Core\Tenancy\TenantContext;
 use Dedoc\Scramble\Scramble;
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Une école active par requête, job ou commande (voir TenantContext).
         $this->app->scoped(TenantContext::class);
+        $this->app->scoped(DashboardFigures::class);
     }
 
     /**

@@ -3,10 +3,12 @@
 namespace App\Providers\Filament;
 
 use App\Filament\School\Auth\Login;
+use App\Filament\School\Pages\Dashboard;
 use App\Filament\School\Pages\EditSchoolProfile;
 use App\Filament\School\Support\NavigationGroups;
 use App\Filament\Support\BrandColors;
 use App\Filament\Support\InitialsAvatarProvider;
+use App\Filament\Support\TalendaTheme;
 use App\Modules\Core\Http\Middleware\SyncFilamentTenant;
 use App\Modules\Core\Models\Tenant;
 use App\Modules\Finances\Http\Controllers\ReceiptController;
@@ -14,10 +16,8 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -30,7 +30,7 @@ class SchoolPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        return TalendaTheme::apply($panel)
             ->default()
             ->id('school')
             ->path('ecole')
@@ -69,9 +69,7 @@ class SchoolPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/School/Widgets'), for: 'App\Filament\School\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
+            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
