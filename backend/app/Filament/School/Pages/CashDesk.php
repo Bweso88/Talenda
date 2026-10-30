@@ -6,9 +6,11 @@ use App\Filament\School\Support\FinanceLinks;
 use App\Filament\School\Support\NavigationGroups;
 use App\Models\User;
 use App\Modules\Academic\Enums\SchoolYearStatus;
+use App\Modules\Academic\Models\Site;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
 use App\Modules\Finances\Actions\CashDesk as CashDeskAction;
 use App\Modules\Finances\Actions\RecordPayment;
+use App\Modules\Finances\Enums\CashRegisterKind;
 use App\Modules\Finances\Enums\PaymentMethod;
 use App\Modules\Finances\Models\CashRegister;
 use App\Modules\Finances\Models\CashSession;
@@ -37,6 +39,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
 use UnitEnum;
@@ -202,19 +205,28 @@ class CashDesk extends Page implements HasTable
                 ->schema([
                     Select::make('cash_register_id')
                         ->label('Caisse')
-                        ->options(fn (): array => CashRegister::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
-                        ->default(fn (): ?int => CashRegister::query()->where('is_active', true)->count() === 1 ? CashRegister::query()->where('is_active', true)->value('id') : null)
+                        ->options(fn (): array => $this->cashRegisters()->pluck('name', 'id')->all())
+                        ->default(fn (): ?int => $this->cashRegisters()->count() === 1 ? $this->cashRegisters()->first()?->id : null)
+                        ->live()
+                        ->afterStateUpdated(fn (Set $set, ?string $state) => $set('opening_float', $state === null ? 0 : CashRegister::query()->find($state)?->balance()))
                         ->required(),
                     TextInput::make('opening_float')
-                        ->label('Fond de caisse (espèces au départ)')
-                        ->numeric()->integer()->minValue(0)->default(0)->suffix('FCFA')
+                        ->label('Fond de caisse (espèces comptées au départ)')
+                        ->helperText('Proposé : le solde de la caisse. Comptez les espèces ; un écart doit être expliqué.')
+                        ->numeric()->integer()->minValue(0)
+                        ->default(fn (): int => $this->cashRegisters()->count() === 1 ? (int) $this->cashRegisters()->first()?->balance() : 0)
+                        ->suffix('FCFA')
                         ->required(),
+                    TextInput::make('opening_note')
+                        ->label('Explication de l\'écart éventuel')
+                        ->maxLength(255),
                 ])
                 ->action(function (array $data): void {
                     $this->guard(fn () => app(CashDeskAction::class)->open(
                         CashRegister::query()->findOrFail($data['cash_register_id']),
                         (int) $data['opening_float'],
                         $this->user(),
+                        $data['opening_note'] ?? null,
                     ), 'Caisse ouverte.');
                 }),
             Action::make('closeSession')
@@ -281,6 +293,16 @@ class CashDesk extends Page implements HasTable
         ]);
     }
 
+    /**
+     * Caisses d'espèces actives (mobile money et banque ne s'ouvrent pas).
+     *
+     * @return Collection<int, CashRegister>
+     */
+    private function cashRegisters(): Collection
+    {
+        return CashRegister::query()->where('is_active', true)->where('kind', CashRegisterKind::Cash)->orderBy('name')->get();
+    }
+
     private function session(): ?CashSession
     {
         return CashDeskAction::openSessionOf($this->user());
@@ -304,8 +326,12 @@ class CashDesk extends Page implements HasTable
     {
         $term = '%'.mb_strtolower(trim($search)).'%';
 
+        // École à plusieurs sites : le caissier d'un site ne voit que ses élèves.
+        $siteId = Site::isMultiSite() ? $this->session()?->cashRegister->site_id : null;
+
         return Invoice::query()
             ->with(['student', 'enrollment.schoolClass', 'schoolYear'])
+            ->when($siteId !== null, fn (Builder $query) => $query->whereHas('enrollment.schoolClass', fn (Builder $query) => $query->where('site_id', $siteId)))
             ->whereHas('schoolYear', fn (Builder $query) => $query->where('status', '!=', SchoolYearStatus::Draft))
             ->whereHas('student', fn (Builder $query) => $query
                 ->whereRaw('lower(last_name) like ?', [$term])

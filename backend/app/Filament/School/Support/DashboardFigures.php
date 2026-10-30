@@ -13,6 +13,8 @@ use App\Modules\Core\Support\SchoolClock;
 use App\Modules\Core\Tenancy\TenantContext;
 use App\Modules\Enrollments\Enums\EnrollmentStatus;
 use App\Modules\Enrollments\Models\Enrollment;
+use App\Modules\Finances\Enums\CashOperationStatus;
+use App\Modules\Finances\Models\CashOperation;
 use App\Modules\Finances\Models\InvoiceLine;
 use App\Modules\Finances\Models\Payment;
 use App\Modules\Finances\Support\UnpaidReport;
@@ -175,6 +177,24 @@ final class DashboardFigures
             ->where('status', TermStatus::Locked)
             ->orderBy('position')
             ->first());
+    }
+
+    /**
+     * Trésorerie : sorties à valider, avances non justifiées.
+     *
+     * @return array{pending: int, advances: int, advances_amount: int}
+     */
+    public function treasury(): array
+    {
+        return $this->remember('treasury', function (): array {
+            $advances = CashOperation::query()->where('status', CashOperationStatus::Outstanding);
+
+            return [
+                'pending' => CashOperation::query()->where('status', CashOperationStatus::PendingApproval)->count(),
+                'advances' => (clone $advances)->count(),
+                'advances_amount' => (int) (clone $advances)->sum('amount'),
+            ];
+        });
     }
 
     /**

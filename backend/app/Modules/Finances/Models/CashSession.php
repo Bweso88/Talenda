@@ -6,8 +6,6 @@ namespace App\Modules\Finances\Models;
 
 use App\Models\User;
 use App\Modules\Core\Tenancy\BelongsToTenant;
-use App\Modules\Finances\Enums\PaymentMethod;
-use App\Modules\Finances\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -86,15 +84,13 @@ class CashSession extends Model
     }
 
     /**
-     * Espèces qui doivent se trouver dans la caisse : fond de caisse plus
-     * encaissements en espèces non annulés.
+     * Espèces qui doivent se trouver dans la caisse : son solde dans le
+     * journal (fond de départ, encaissements en espèces non annulés,
+     * dépenses, avances, virements).
      */
     public function currentExpectedCash(): int
     {
-        return $this->opening_float + (int) $this->payments()
-            ->where('method', PaymentMethod::Cash)
-            ->where('status', PaymentStatus::Valid)
-            ->sum('amount');
+        return $this->loadMissing('cashRegister')->cashRegister->balance();
     }
 
     /**

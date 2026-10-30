@@ -4,6 +4,7 @@ namespace App\Filament\School\Resources\SchoolClasses\Tables;
 
 use App\Modules\Academic\Models\Level;
 use App\Modules\Academic\Models\SchoolYear;
+use App\Modules\Academic\Models\Site;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -17,7 +18,7 @@ class SchoolClassesTable
     {
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query
-                ->with(['level', 'stream', 'headTeacher', 'schoolYear'])
+                ->with(['level', 'stream', 'headTeacher', 'schoolYear', 'site'])
                 ->withSum('classSubjects as total_coefficient', 'coefficient'))
             ->defaultSort(fn (Builder $query) => $query
                 ->orderBy(
@@ -27,6 +28,7 @@ class SchoolClassesTable
             ->columns([
                 TextColumn::make('name')->label('Classe')->weight('bold')->searchable(),
                 TextColumn::make('level.name')->label('Niveau'),
+                TextColumn::make('site.name')->label('Site')->visible(fn (): bool => Site::isMultiSite()),
                 TextColumn::make('stream.code')->label('Série')->placeholder('—'),
                 TextColumn::make('headTeacher.full_name')->label('Professeur principal')->placeholder('—'),
                 TextColumn::make('class_subjects_count')->label('Matières')->counts('classSubjects'),

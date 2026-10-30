@@ -53,6 +53,10 @@ return [
         'finance.manage',
         'payment.record',
         'payment.reverse',
+        // Trésorerie : dépenses, salaires, avances, virements entre caisses.
+        'treasury.operate',
+        'treasury.approve',
+        'treasury.manage',
         // Évaluations et bulletins (étape 4).
         'assessment.enter',
         'assessment.manage',
@@ -84,6 +88,7 @@ return [
             'staff.view', 'staff.manage',
             'student.view', 'student.manage', 'enrollment.manage', 'document.issue',
             'finance.view', 'finance.manage', 'payment.reverse',
+            'treasury.operate', 'treasury.approve', 'treasury.manage',
             'assessment.enter', 'assessment.manage', 'term.manage', 'term.reopen', 'report_card.view',
             'attendance.take', 'attendance.manage', 'discipline.manage',
             'communication.send', 'communication.manage', 'integration.manage',
@@ -105,8 +110,9 @@ return [
         'accountant' => [
             'structure.view', 'student.view',
             'finance.view', 'finance.manage', 'payment.record', 'payment.reverse',
+            'treasury.operate', 'treasury.approve', 'treasury.manage',
         ],
-        'cashier' => ['structure.view', 'student.view', 'finance.view', 'payment.record'],
+        'cashier' => ['structure.view', 'student.view', 'finance.view', 'payment.record', 'treasury.operate'],
         // Notes : ses propres matières (AssessmentPolicy) ; appel : ses
         // classes, le jour même (AttendancePolicy).
         'teacher' => ['structure.view', 'assessment.enter', 'attendance.take'],
@@ -132,6 +138,43 @@ return [
 
     'push' => [
         'driver' => env('PUSH_DRIVER', 'log'),
+    ],
+
+    /*
+     * Comptes SYSCOHADA révisé utilisés par le journal de trésorerie
+     * (docs/TRESORERIE.md). Valeurs par défaut, à faire valider par le
+     * comptable de l'école ; les comptes de caisse et de charge se règlent
+     * par caisse et par catégorie de dépense.
+     */
+    'accounting' => [
+        'accounts' => [
+            'parents' => ['411', 'Clients — parents d\'élèves'],
+            'advances' => ['421', 'Personnel, avances et acomptes'],
+            'salaries_due' => ['422', 'Personnel, rémunérations dues'],
+            'salaries' => ['661', 'Rémunérations directes versées au personnel national'],
+            'transfers' => ['585', 'Virements de fonds'],
+            'cash_shortage' => ['658', 'Charges diverses — manquant de caisse'],
+            'cash_surplus' => ['758', 'Produits divers — excédent de caisse'],
+        ],
+        // Compte proposé à la création d'une caisse, selon sa nature.
+        'register_accounts' => [
+            'cash' => '5711',
+            'mobile_money' => '5521',
+            'bank' => '5211',
+        ],
+        'expense_categories' => [
+            ['Eau', '6051'],
+            ['Électricité', '6052'],
+            ['Fournitures d\'entretien', '6054'],
+            ['Fournitures de bureau', '6055'],
+            ['Petit matériel et fournitures pédagogiques', '6056'],
+            ['Carburant et transport', '6181'],
+            ['Loyers', '6222'],
+            ['Entretien et réparations', '624'],
+            ['Téléphone et internet', '628'],
+            ['Frais bancaires', '631'],
+            ['Autres charges', '6588'],
+        ],
     ],
 
     'default_country' => 'CG',

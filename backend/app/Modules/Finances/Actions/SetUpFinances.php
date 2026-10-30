@@ -8,6 +8,7 @@ use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Core\Models\Tenant;
 use App\Modules\Core\Tenancy\TenantContext;
 use App\Modules\Finances\Models\CashRegister;
+use App\Modules\Finances\Models\ExpenseCategory;
 use App\Modules\Finances\Models\FeeType;
 use App\Modules\Finances\Models\PaymentPlan;
 use App\Modules\Finances\Models\PaymentPlanInstallment;
@@ -40,6 +41,10 @@ final class SetUpFinances
             }
 
             CashRegister::query()->firstOrCreate(['name' => 'Caisse principale']);
+
+            foreach (config('talenda.accounting.expense_categories', []) as $position => [$name, $accountCode]) {
+                ExpenseCategory::query()->firstOrCreate(['name' => $name], ['account_code' => $accountCode, 'position' => $position + 1]);
+            }
 
             // Années créées avant que Finances ne soit prêt (provisionnement).
             SchoolYear::query()->get()->each(fn (SchoolYear $schoolYear) => $this->paymentPlansFor($schoolYear));

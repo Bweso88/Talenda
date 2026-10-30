@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $uuid
  * @property int $school_year_id
+ * @property int|null $site_id
  * @property int $level_id
  * @property int|null $stream_id
  * @property string $name
@@ -30,13 +31,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $room
  * @property int|null $head_teacher_id
  * @property SchoolYear $schoolYear
+ * @property Site|null $site
  * @property Level $level
  * @property Stream|null $stream
  * @property StaffMember|null $headTeacher
  */
 #[UseFactory(SchoolClassFactory::class)]
 #[UsePolicy(SchoolClassPolicy::class)]
-#[Fillable(['school_year_id', 'level_id', 'stream_id', 'name', 'capacity', 'room', 'head_teacher_id'])]
+#[Fillable(['school_year_id', 'site_id', 'level_id', 'stream_id', 'name', 'capacity', 'room', 'head_teacher_id'])]
 class SchoolClass extends Model
 {
     use BelongsToTenant;
@@ -52,6 +54,25 @@ class SchoolClass extends Model
     public function schoolYear(): BelongsTo
     {
         return $this->belongsTo(SchoolYear::class);
+    }
+
+    /**
+     * Une classe sans site précisé va sur le site principal : dans une
+     * école à un seul site, personne n'a à le choisir.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (SchoolClass $schoolClass): void {
+            $schoolClass->site_id ??= Site::main()?->id;
+        });
+    }
+
+    /**
+     * @return BelongsTo<Site, $this>
+     */
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 
     /**

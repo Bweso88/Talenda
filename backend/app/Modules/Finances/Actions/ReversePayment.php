@@ -9,6 +9,7 @@ use App\Modules\Core\Actions\RecordAudit;
 use App\Modules\Core\Exceptions\BusinessRuleViolation;
 use App\Modules\Finances\Enums\PaymentStatus;
 use App\Modules\Finances\Models\Payment;
+use App\Modules\Finances\Support\Ledger;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +21,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class ReversePayment
 {
-    public function __construct(private readonly RecordAudit $recordAudit) {}
+    public function __construct(
+        private readonly RecordAudit $recordAudit,
+        private readonly Ledger $ledger,
+    ) {}
 
     public function handle(Payment $payment, string $reason, User $user): void
     {
@@ -43,6 +47,8 @@ final class ReversePayment
                 'reversed_by' => $user->id,
                 'reversal_reason' => trim($reason),
             ]);
+
+            $this->ledger->reverse($payment, trim($reason), $user);
 
             $this->recordAudit->handle('payment.reversed', actor: $user, subject: $payment, metadata: [
                 'receipt' => $payment->receipt_number,

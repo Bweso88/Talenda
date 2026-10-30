@@ -30,9 +30,12 @@ use App\Modules\Enrollments\Models\Enrollment;
 use App\Modules\Enrollments\Models\Guardian;
 use App\Modules\Enrollments\Models\Student;
 use App\Modules\Finances\Actions\CashDesk;
+use App\Modules\Finances\Actions\CashOperations;
 use App\Modules\Finances\Actions\RecordPayment;
+use App\Modules\Finances\Enums\CashRegisterKind;
 use App\Modules\Finances\Enums\PaymentMethod;
 use App\Modules\Finances\Models\CashRegister;
+use App\Modules\Finances\Models\ExpenseCategory;
 use App\Modules\Finances\Models\FeeAmount;
 use App\Modules\Finances\Models\FeeType;
 use App\Modules\Finances\Models\Invoice;
@@ -261,6 +264,28 @@ class DatabaseSeeder extends Seeder
         }
 
         $record->handle($invoices[1], 20000, PaymentMethod::MobileMoney, $cashier, 'MP261028.0915.B71234');
+
+        $this->seedDemoTreasury($cashier);
+    }
+
+    /**
+     * Trésorerie : caisse centrale et banque, une dépense, une avance à
+     * justifier, un salaire, un versement en route et une demande à valider.
+     */
+    private function seedDemoTreasury(User $cashier): void
+    {
+        $register = CashRegister::query()->where('name', 'Caisse principale')->firstOrFail();
+        $central = CashRegister::create(['name' => 'Caisse centrale']);
+        CashRegister::create(['name' => 'Banque (BGFI)', 'kind' => CashRegisterKind::Bank]);
+        $category = fn (string $name): ExpenseCategory => ExpenseCategory::query()->where('name', $name)->firstOrFail();
+        $teacher = StaffMember::query()->where('phone', '+242064444402')->firstOrFail();
+        $operations = app(CashOperations::class);
+
+        $operations->expense($register, $category('Eau'), 18500, 'Facture LCDE d\'octobre', $cashier, 'LCDE-2026-10-4471');
+        $operations->advance($register, $category('Petit matériel et fournitures pédagogiques'), 15000, 'Craies et marqueurs', $cashier, $teacher);
+        $operations->salary($register, $teacher, now()->subMonth()->format('Y-m'), 40000, $cashier);
+        $operations->transfer($register, $central, 150000, $cashier, 'Versement de la semaine');
+        $operations->expense($register, $category('Entretien et réparations'), 60000, 'Réparation de la toiture du bloc B', $cashier);
     }
 
     /**

@@ -12,6 +12,7 @@ use App\Modules\Finances\Enums\PaymentMethod;
 use App\Modules\Finances\Events\PaymentRecorded;
 use App\Modules\Finances\Models\Invoice;
 use App\Modules\Finances\Models\Payment;
+use App\Modules\Finances\Support\Ledger;
 use App\Modules\Finances\Support\Money;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,7 @@ final class RecordPayment
     public function __construct(
         private readonly SequenceGenerator $sequenceGenerator,
         private readonly RecordAudit $recordAudit,
+        private readonly Ledger $ledger,
     ) {}
 
     public function handle(
@@ -86,6 +88,8 @@ final class RecordPayment
             ]);
 
             $invoice->unsetRelation('payments');
+            $payment->setRelation('invoice', $invoice);
+            $this->ledger->paymentReceived($payment, $session?->cashRegister, $cashier);
 
             $this->recordAudit->handle('payment.recorded', actor: $cashier, subject: $payment, metadata: [
                 'receipt' => $payment->receipt_number,

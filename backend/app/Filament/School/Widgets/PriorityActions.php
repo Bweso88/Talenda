@@ -6,6 +6,7 @@ use App\Filament\School\Pages\ClassCouncil;
 use App\Filament\School\Pages\TakeAttendancePage;
 use App\Filament\School\Pages\UnpaidReport;
 use App\Filament\School\Resources\AbsenceJustifications\AbsenceJustificationResource;
+use App\Filament\School\Resources\CashOperations\CashOperationResource;
 use App\Filament\School\Resources\Enrollments\EnrollmentResource;
 use App\Filament\School\Resources\SmsMessages\SmsMessageResource;
 use App\Filament\School\Support\DashboardFigures;
@@ -67,6 +68,14 @@ class PriorityActions extends Widget
 
         if ($user->can('finance.view') && ($overdue = $figures->overdue())['amount'] > 0) {
             $items[] = ['title' => 'Retards de paiement', 'text' => Money::format($overdue['amount']).' en retard : relance par SMS possible.', 'badge' => "{$overdue['families']} famille(s)", 'tone' => 'danger', 'icon' => Heroicon::OutlinedExclamationTriangle, 'url' => UnpaidReport::getUrl()];
+        }
+
+        if ($user->can('treasury.approve') && ($count = $figures->treasury()['pending']) > 0) {
+            $items[] = ['title' => 'Sorties d\'argent à valider', 'text' => 'Dépenses, salaires ou avances au-delà du seuil.', 'badge' => (string) $count, 'tone' => 'warning', 'icon' => Heroicon::OutlinedBanknotes, 'url' => CashOperationResource::getUrl()];
+        }
+
+        if ($user->can('treasury.approve') && ($advances = $figures->treasury())['advances'] > 0) {
+            $items[] = ['title' => 'Avances à justifier', 'text' => Money::format($advances['advances_amount']).' remis, facture et monnaie pas encore rapportées.', 'badge' => (string) $advances['advances'], 'tone' => 'danger', 'icon' => Heroicon::OutlinedHandRaised, 'url' => CashOperationResource::getUrl()];
         }
 
         if ($user->can('enrollment.manage') && ($count = $figures->preRegistered()) > 0) {

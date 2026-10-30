@@ -4,6 +4,7 @@ namespace App\Filament\School\Resources\SchoolClasses\Schemas;
 
 use App\Modules\Academic\Enums\SchoolYearStatus;
 use App\Modules\Academic\Models\SchoolYear;
+use App\Modules\Academic\Models\Site;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -31,6 +32,12 @@ class SchoolClassForm
                             ->default(fn (): ?int => SchoolYear::query()->open()->value('id'))
                             ->required()
                             ->disabledOn('edit'),
+                        Select::make('site_id')
+                            ->label('Site')
+                            ->relationship('site', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('is_active', true)->orderBy('name'))
+                            ->default(fn (): ?int => Site::main()?->id)
+                            ->visible(fn (): bool => Site::isMultiSite())
+                            ->required(fn (): bool => Site::isMultiSite()),
                         Select::make('level_id')
                             ->label('Niveau')
                             ->relationship('level', 'name', modifyQueryUsing: fn (Builder $query) => $query->orderBy('position'))

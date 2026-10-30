@@ -6,6 +6,7 @@ namespace App\Modules\Academic\Actions;
 
 use App\Modules\Academic\Models\Cycle;
 use App\Modules\Academic\Models\Level;
+use App\Modules\Academic\Models\Site;
 use App\Modules\Academic\Models\Stream;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Core\Models\Tenant;
@@ -51,6 +52,11 @@ final class ApplyAcademicPreset
 
         $this->tenantContext->run($tenant, function () use ($preset, $cycleCodes): void {
             DB::transaction(function () use ($preset, $cycleCodes): void {
+                // Toute école a au moins un site ; elle en ajoute d'autres si besoin.
+                if (! Site::query()->exists()) {
+                    Site::create(['name' => 'Site principal']);
+                }
+
                 $previousLevel = null;
                 $cyclePosition = 0;
                 $levelPosition = 0;
