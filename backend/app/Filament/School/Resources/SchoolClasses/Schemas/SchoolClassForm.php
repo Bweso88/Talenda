@@ -3,11 +3,14 @@
 namespace App\Filament\School\Resources\SchoolClasses\Schemas;
 
 use App\Modules\Academic\Enums\SchoolYearStatus;
+use App\Modules\Academic\Models\Room;
 use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Academic\Models\Site;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -36,8 +39,10 @@ class SchoolClassForm
                             ->label('Site')
                             ->relationship('site', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('is_active', true)->orderBy('name'))
                             ->default(fn (): ?int => Site::main()?->id)
-                            ->visible(fn (): bool => Site::isMultiSite())
-                            ->required(fn (): bool => Site::isMultiSite()),
+                            ->helperText(fn (): ?string => Site::isMultiSite() ? null : 'Un seul site pour l\'instant : ajoutez-en dans Paramètres → Sites.')
+                            ->live()
+                            ->afterStateUpdated(fn (Set $set) => $set('room_id', null))
+                            ->required(),
                         Select::make('level_id')
                             ->label('Niveau')
                             ->relationship('level', 'name', modifyQueryUsing: fn (Builder $query) => $query->orderBy('position'))
@@ -60,9 +65,33 @@ class SchoolClassForm
                             ->numeric()
                             ->integer()
                             ->minValue(1),
-                        TextInput::make('room')
+                        Select::make('room_id')
                             ->label('Salle')
-                            ->maxLength(50),
+                            ->relationship('room', 'name', modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                                ->where('site_id', $get('site_id'))
+                                ->where('is_active', true)
+                                ->orderBy('name'))
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state): void {
+                                $capacity = $state === null ? null : Room::query()->find($state)?->capacity;
+
+                                if ($capacity !== null && blank($get('capacity'))) {
+                                    $set('capacity', $capacity);
+                                }
+                            })
+                            ->helperText('Salles du site (Paramètres → Salles). Une salle manquante se crée avec le bouton +.')
+                            ->createOptionForm([
+                                TextInput::make('name')->label('Nom de la salle')->placeholder('Salle 12')->required()->maxLength(50),
+                                TextInput::make('capacity')->label('Places')->numeric()->integer()->minValue(1),
+                            ])
+                            ->createOptionUsing(fn (array $data, Get $get): int => Room::create([
+                                'site_id' => $get('site_id'),
+                                'name' => trim($data['name']),
+                                'capacity' => $data['capacity'] ?? null,
+                            ])->id)
+                            ->createOptionModalHeading('Nouvelle salle'),
                         Select::make('head_teacher_id')
                             ->label('Professeur principal')
                             ->relationship(

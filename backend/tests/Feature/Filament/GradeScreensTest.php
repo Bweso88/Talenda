@@ -121,7 +121,11 @@ it('verrouille, publie et télécharge les bulletins depuis le conseil de classe
     expect($this->term->fresh()->status)->toBe(TermStatus::Published)
         ->and(TermResult::count())->toBe(2);
 
-    $page->callAction('reportCards')->assertFileDownloaded('bulletins-6e-a-premier-trimestre.pdf');
+    $year = $this->term->schoolYear->name;
+
+    $page->callAction('reportCards')->assertFileDownloaded("bulletins-6e-a-premier-trimestre-{$year}.pdf")
+        ->callAction('transcripts')->assertFileDownloaded("releves-de-notes-6e-a-premier-trimestre-{$year}.pdf")
+        ->callAction('councilMinutes')->assertFileDownloaded("proces-verbal-6e-a-premier-trimestre-{$year}.pdf");
 });
 
 it('enregistre les décisions de fin d\'année', function () {

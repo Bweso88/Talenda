@@ -62,9 +62,17 @@ class Site extends Model implements TracksUsage
         return $this->hasMany(CashRegister::class);
     }
 
+    /**
+     * @return HasMany<Room, $this>
+     */
+    public function rooms(): HasMany
+    {
+        return $this->hasMany(Room::class);
+    }
+
     public function isInUse(): bool
     {
-        return $this->schoolClasses()->exists() || $this->cashRegisters()->exists();
+        return $this->schoolClasses()->exists() || $this->cashRegisters()->exists() || $this->rooms()->exists();
     }
 
     /**

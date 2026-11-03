@@ -122,6 +122,8 @@ class DatabaseSeeder extends Seeder
             ->update(['must_change_password' => false]);
 
         app(TenantContext::class)->set(null);
+
+        $this->call(PreviousYearDemoSeeder::class);
     }
 
     /**

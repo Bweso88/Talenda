@@ -4,11 +4,13 @@ namespace App\Filament\School\Pages;
 
 use App\Filament\School\Support\NavigationGroups;
 use App\Models\User;
+use App\Modules\Academic\Enums\SchoolYearStatus;
 use App\Modules\Academic\Enums\TermStatus;
 use App\Modules\Academic\Models\ClassSubject;
 use App\Modules\Academic\Models\SchoolClass;
 use App\Modules\Academic\Models\SchoolYear;
 use App\Modules\Academic\Models\Term;
+use App\Modules\Assessments\Actions\IssueClassDocuments;
 use App\Modules\Assessments\Actions\IssueReportCards;
 use App\Modules\Assessments\Actions\ManageTerm;
 use App\Modules\Assessments\Actions\SaveTermComments;
@@ -24,6 +26,7 @@ use App\Modules\SchoolLife\Support\AttendanceTotals;
 use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -73,14 +76,26 @@ class ClassCouncil extends Page
 
     public function mount(): void
     {
-        $yearId = SchoolYear::query()->open()->value('id');
+        $yearId = SchoolYear::query()->open()->value('id')
+            ?? SchoolYear::query()->where('status', '!=', SchoolYearStatus::Draft)->orderByDesc('starts_on')->value('id');
 
-        $this->form->fill([
+        $this->form->fill(['school_year_id' => $yearId, ...self::defaultsFor($yearId)]);
+        $this->loadComments();
+    }
+
+    /**
+     * Période en cours (la première non publiée, sinon la dernière) et
+     * première classe de l'année.
+     *
+     * @return array{term_id: int|null, school_class_id: int|null}
+     */
+    private static function defaultsFor(mixed $yearId): array
+    {
+        return [
             'term_id' => Term::query()->where('school_year_id', $yearId)->where('status', '!=', TermStatus::Published)->orderBy('position')->value('id')
                 ?? Term::query()->where('school_year_id', $yearId)->orderByDesc('position')->value('id'),
             'school_class_id' => SchoolClass::query()->where('school_year_id', $yearId)->orderBy('name')->value('id'),
-        ]);
-        $this->loadComments();
+        ];
     }
 
     public function content(Schema $schema): Schema
@@ -94,12 +109,26 @@ class ClassCouncil extends Page
             ->statePath('data')
             ->components([
                 Section::make()
-                    ->columns(3)
+                    ->columns(4)
                     ->components([
+                        Select::make('school_year_id')
+                            ->label('Année scolaire')
+                            ->options(fn (): array => SchoolYear::query()
+                                ->where('status', '!=', SchoolYearStatus::Draft)
+                                ->orderByDesc('starts_on')
+                                ->get()
+                                ->mapWithKeys(fn (SchoolYear $year): array => [$year->id => $year->name.($year->isClosed() ? ' (clôturée)' : '')])
+                                ->all())
+                            ->selectablePlaceholder(false)
+                            ->live()
+                            ->afterStateUpdated(function (?string $state): void {
+                                $this->data = [...$this->data, ...self::defaultsFor($state)];
+                                $this->loadComments();
+                            }),
                         Select::make('term_id')
                             ->label('Période')
                             ->options(fn (): array => Term::query()
-                                ->where('school_year_id', SchoolYear::query()->open()->value('id'))
+                                ->where('school_year_id', $this->data['school_year_id'] ?? null)
                                 ->orderBy('position')
                                 ->get()
                                 ->mapWithKeys(fn (Term $term): array => [$term->id => "{$term->name} ({$term->status->getLabel()})"])
@@ -109,13 +138,13 @@ class ClassCouncil extends Page
                         Select::make('school_class_id')
                             ->label('Classe')
                             ->options(fn (): array => SchoolClass::query()
-                                ->where('school_year_id', SchoolYear::query()->open()->value('id'))
+                                ->where('school_year_id', $this->data['school_year_id'] ?? null)
                                 ->orderBy('name')
                                 ->pluck('name', 'id')
                                 ->all())
                             ->live()
                             ->afterStateUpdated(fn () => $this->loadComments()),
-                        Text::make(fn (): string => $this->term() === null ? '' : match ($this->term()->status) {
+                        Text::make(fn (): string => $this->term() === null ? '' : ($this->yearClosed() ? 'Année clôturée : consultation et impression seulement. ' : '').match ($this->term()->status) {
                             TermStatus::Open => 'Saisie des notes ouverte. Verrouillez-la avant le conseil de classe.',
                             TermStatus::Locked => 'Saisie verrouillée : résultats provisoires. Publiez pour figer les bulletins.',
                             TermStatus::Published => 'Bulletins publiés : résultats figés.',
@@ -132,7 +161,7 @@ class ClassCouncil extends Page
     }
 
     /**
-     * @return array<Action>
+     * @return array<Action|ActionGroup>
      */
     protected function getHeaderActions(): array
     {
@@ -140,7 +169,7 @@ class ClassCouncil extends Page
             Action::make('saveComments')
                 ->label('Enregistrer les appréciations')
                 ->icon(Heroicon::OutlinedCheck)
-                ->visible(fn (): bool => $this->ready() && $this->term()?->status !== TermStatus::Published && $this->userCan('term.manage'))
+                ->visible(fn (): bool => $this->ready() && ! $this->yearClosed() && $this->term()?->status !== TermStatus::Published && $this->userCan('term.manage'))
                 ->action(fn () => $this->guard(fn () => app(SaveTermComments::class)->handle($this->term(), null, (array) ($this->data['comments'] ?? []), $this->user()), 'Appréciations enregistrées.')),
             Action::make('lock')
                 ->label('Verrouiller la saisie')
@@ -148,13 +177,13 @@ class ClassCouncil extends Page
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalDescription('Les enseignants ne pourront plus modifier les notes de cette période, dans toutes les classes.')
-                ->visible(fn (): bool => $this->term()?->status === TermStatus::Open && $this->userCan('term.manage'))
+                ->visible(fn (): bool => ! $this->yearClosed() && $this->term()?->status === TermStatus::Open && $this->userCan('term.manage'))
                 ->action(fn () => $this->guard(fn () => app(ManageTerm::class)->lock($this->term(), $this->user()), 'Saisie verrouillée.')),
             Action::make('unlock')
                 ->label('Rouvrir la saisie')
                 ->icon(Heroicon::OutlinedLockOpen)
                 ->color('gray')
-                ->visible(fn (): bool => $this->term()?->status === TermStatus::Locked && $this->userCan('term.manage'))
+                ->visible(fn (): bool => ! $this->yearClosed() && $this->term()?->status === TermStatus::Locked && $this->userCan('term.manage'))
                 ->action(fn () => $this->guard(fn () => app(ManageTerm::class)->unlock($this->term(), $this->user()), 'Saisie rouverte.')),
             Action::make('publish')
                 ->label('Publier les bulletins')
@@ -162,18 +191,31 @@ class ClassCouncil extends Page
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalDescription('Les moyennes, rangs et appréciations de toutes les classes sont figés et les bulletins deviennent disponibles.')
-                ->visible(fn (): bool => $this->term()?->status === TermStatus::Locked && $this->userCan('term.manage'))
+                ->visible(fn (): bool => ! $this->yearClosed() && $this->term()?->status === TermStatus::Locked && $this->userCan('term.manage'))
                 ->action(fn () => $this->guard(fn () => app(ManageTerm::class)->publish($this->term(), $this->user()), 'Bulletins publiés.')),
-            Action::make('reportCards')
-                ->label('Télécharger les bulletins de la classe')
-                ->icon(Heroicon::OutlinedArrowDownTray)
-                ->visible(fn (): bool => $this->ready() && $this->term()?->status === TermStatus::Published)
-                ->action(fn (): ?StreamedResponse => $this->downloadReportCards()),
+            ActionGroup::make([
+                Action::make('reportCards')
+                    ->label('Bulletins')
+                    ->icon(Heroicon::OutlinedDocumentText)
+                    ->action(fn (): ?StreamedResponse => $this->download('bulletins', fn (Term $term, SchoolClass $schoolClass): string => app(IssueReportCards::class)->handle($term, $schoolClass))),
+                Action::make('transcripts')
+                    ->label('Relevés de notes')
+                    ->icon(Heroicon::OutlinedClipboardDocumentList)
+                    ->action(fn (): ?StreamedResponse => $this->download('releves-de-notes', fn (Term $term, SchoolClass $schoolClass): string => app(IssueClassDocuments::class)->transcripts($term, $schoolClass))),
+                Action::make('councilMinutes')
+                    ->label('Procès-verbal du conseil')
+                    ->icon(Heroicon::OutlinedTableCells)
+                    ->action(fn (): ?StreamedResponse => $this->download('proces-verbal', fn (Term $term, SchoolClass $schoolClass): string => app(IssueClassDocuments::class)->councilMinutes($term, $schoolClass))),
+            ])
+                ->label('Imprimer')
+                ->icon(Heroicon::OutlinedPrinter)
+                ->button()
+                ->visible(fn (): bool => $this->ready() && $this->term()?->status === TermStatus::Published),
             Action::make('reopen')
                 ->label('Rouvrir les bulletins')
                 ->icon(Heroicon::OutlinedArrowUturnLeft)
                 ->color('danger')
-                ->visible(fn (): bool => $this->term()?->status === TermStatus::Published && $this->userCan('term.reopen'))
+                ->visible(fn (): bool => ! $this->yearClosed() && $this->term()?->status === TermStatus::Published && $this->userCan('term.reopen'))
                 ->modalDescription('Les bulletins publiés de toutes les classes sont retirés ; ils seront recalculés à la prochaine publication. Cette action est journalisée.')
                 ->schema([TextInput::make('reason')->label('Motif')->required()->maxLength(255)])
                 ->action(fn (array $data) => $this->guard(fn () => app(ManageTerm::class)->reopen($this->term(), $this->user(), $data['reason']), 'Bulletins retirés : la période est verrouillée.')),
@@ -305,17 +347,27 @@ class ClassCouncil extends Page
             ->all();
     }
 
-    private function downloadReportCards(): ?StreamedResponse
+    /**
+     * @param  Closure(Term, SchoolClass): string  $render
+     */
+    private function download(string $prefix, Closure $render): ?StreamedResponse
     {
+        $term = $this->term();
+        $schoolClass = $this->schoolClass();
+
+        if ($term === null || $schoolClass === null) {
+            return null;
+        }
+
         try {
-            $pdf = app(IssueReportCards::class)->handle($this->term(), $this->schoolClass());
+            $pdf = $render($term, $schoolClass);
         } catch (BusinessRuleViolation $exception) {
             Notification::make()->danger()->title($exception->getMessage())->send();
 
             return null;
         }
 
-        $filename = 'bulletins-'.str($this->schoolClass()?->name)->slug().'-'.str($this->term()?->name)->slug().'.pdf';
+        $filename = $prefix.'-'.str($schoolClass->name)->slug().'-'.str($term->name)->slug().'-'.$term->schoolYear->name.'.pdf';
 
         return response()->streamDownload(fn () => print ($pdf), $filename, ['Content-Type' => 'application/pdf']);
     }
@@ -346,6 +398,11 @@ class ClassCouncil extends Page
         }
 
         Notification::make()->success()->title($successMessage)->send();
+    }
+
+    private function yearClosed(): bool
+    {
+        return $this->term()?->schoolYear->isClosed() ?? false;
     }
 
     private function ready(): bool

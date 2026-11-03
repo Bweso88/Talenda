@@ -104,6 +104,25 @@ production.**
 
 Changez ces mots de passe avant de donner l'adresse à une école.
 
+### Année 2025-2026 de démonstration (impressions)
+
+`db:seed` crée aussi, au Lycée Démo de Brazzaville, une année **2025-2026
+complète et clôturée** : une classe de 6e A de dix élèves, factures et
+paiements, notes des trois trimestres, absences, appréciations, bulletins
+publiés, moyennes annuelles et décisions de fin d'année.
+
+Sur une installation déjà alimentée avant cet ajout, lancez une fois :
+
+```bash
+php artisan db:seed --class=PreviousYearDemoSeeder --force
+```
+
+Pour imprimer : Notes et bulletins → Conseil de classe et bulletins →
+Année scolaire « 2025-2026 (clôturée) » → choisir le trimestre → bouton
+**Imprimer** (bulletins, relevés de notes, procès-verbal du conseil). Les
+reçus de paiement se trouvent dans Finances → Factures (filtrer sur
+l'année 2025-2026).
+
 ## 7. Vérifier
 
 1. `https://<adresse>/` mène à la connexion du back-office.
